@@ -5,6 +5,7 @@
 #include "map.h"
 #include "vector.h"
 #include "string.h"
+#include "types.h"
 
 typedef enum mocha_object_type {
 	mocha_object_type_list,
@@ -13,7 +14,9 @@ typedef enum mocha_object_type {
 	mocha_object_type_integer,
 	mocha_object_type_float,
 	mocha_object_type_string,
-	mocha_object_type_keyword
+	mocha_object_type_keyword,
+	mocha_object_type_boolean,
+	mocha_object_type_symbol
 } mocha_object_type;
 
 struct mocha_list;
@@ -28,6 +31,7 @@ typedef struct mocha_object {
 		struct mocha_vector vector;
 		int i;
 		float f;
+		mocha_boolean b;
 		const mocha_char* string;
 	} data;
 } mocha_object;

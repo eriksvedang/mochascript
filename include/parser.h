@@ -6,7 +6,6 @@
 #include "context.h"
 #include "string.h"
 
-typedef int mocha_boolean;
 
 typedef struct mocha_parser {
 	const mocha_char* input;
