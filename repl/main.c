@@ -1,17 +1,26 @@
 #include "../include/parser.h"
+#include "../include/runtime.h"
 #include <string.h>
 #include <stdio.h>
+#include "../include/log.h"
 
 int main(int arc, char* argv[])
 {
 	mocha_parser parser;
 
-	mocha_char input[128];
-	const char* c_input = " {:test ( + 42 99 true [\"hello, world\" symbol_one another_symbol] )}";
-	size_t input_length = strlen(c_input);
+	const int max_length = 1024;
+	mocha_char input[max_length];
+	char c_input[max_length];
+
+	int input_length = fread(c_input, 1, max_length, stdin);
+	c_input[input_length] = 0;
+
 	for (size_t i = 0; i<input_length; ++i) {
 		input[i] = c_input[i];
 	}
 
-	mocha_parser_parse(&parser, input, input_length);
+	struct mocha_object* o = mocha_parser_parse(&parser, input, input_length);
+
+	mocha_runtime runtime;
+	mocha_runtime_eval(&runtime, o);
 }
