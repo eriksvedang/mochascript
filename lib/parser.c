@@ -48,7 +48,8 @@ static mocha_boolean is_separator(mocha_char ch)
 
 static mocha_parse_error get_word(mocha_parser* self)
 {
-	mocha_char* o = self->word_buffer;
+	mocha_char* o = self->word_buffer.string;
+	size_t o_count = 0;
 	const mocha_char* p = self->input;
 	mocha_parse_error e;
 
@@ -60,10 +61,11 @@ static mocha_parse_error get_word(mocha_parser* self)
 	}
 
 	mocha_char ch = *p++;
-	*o++ = ch;
+	o[o_count++] = ch;
 	if (is_separator(ch)) {
 		self->input = p;
-		*o = 0;
+		o[o_count] = 0;
+		self->word_buffer.count = o_count;
 		e.code = 0;
 		return e;
 	}
@@ -72,17 +74,19 @@ static mocha_parse_error get_word(mocha_parser* self)
 		ch = *p++;
 		if (ch == 0) {
 			self->input = p;
-			*o = 0;
+			o[o_count] = 0;
+			self->word_buffer.count = o_count;
 			e.code = -42;
 			return e;
 		}
 		if (is_separator(ch) || is_space((ch))) {
 			self->input = p - 1;
-			*o = 0;
+			o[o_count] = 0;
+			self->word_buffer.count = o_count;
 			e.code = 0;
 			return e;
 		}
-		*o++ = ch;
+		o[o_count++] = ch;
 	}
 }
 
@@ -96,16 +100,6 @@ size_t mocha_string_length(const mocha_char* s)
 	return count;
 }
 
-const char* mocha_string_to_c(const mocha_char* s)
-{
-	static char temp[128];
-	size_t len = mocha_string_length(s);
-	for (size_t i=0; i<len; ++i) {
-		temp[i] = s[i];
-	}
-	temp[len] = 0;
-	return temp;
-}
 
 static mocha_object* parse_object(mocha_parser* self, mocha_parse_error* error);
 
@@ -175,7 +169,7 @@ static mocha_object* parse_symbol(mocha_parser* self, mocha_parse_error* error)
 static mocha_object* parse_number(mocha_parser* self, mocha_parse_error* error)
 {
 	mocha_object* o = mocha_context_create_object(&self->context);
-	const char* s = mocha_string_to_c(self->word_buffer);
+	const char* s = mocha_string_to_c(&self->word_buffer);
 	mocha_boolean is_floating_point = mocha_strchr(s, '.') != 0;
 	if (is_floating_point) {
 		o->data.f = atof(s);
@@ -192,13 +186,14 @@ static mocha_object* parse_string(mocha_parser* self, mocha_parse_error* error)
 	mocha_object* o = mocha_context_create_object(&self->context);
 	o->type = mocha_object_type_string;
 	const mocha_char* p = self->input;
-	mocha_char temp[100];
+	mocha_char temp[1024];
 	size_t count = 0;
 	mocha_char ch;
 	while ((ch = *p++) != '\"') {
 		temp[count++] = ch;
 	}
 	temp[count] = 0;
+	mocha_string_init(&o->data.string, temp, count);
 	self->input = p;
 	return o;
 }
@@ -208,12 +203,12 @@ static mocha_object* parse_literal_or_symbol(mocha_parser* self, mocha_parse_err
 {
 	mocha_object* o;
 
-	mocha_char first_char = self->word_buffer[0];
-	if (mocha_string_equal_str(self->word_buffer, "true")) {
+	mocha_char first_char = self->word_buffer.string[0];
+	if (mocha_string_equal_str(&self->word_buffer, "true")) {
 		o = mocha_context_create_object(&self->context);
 		o->type = mocha_object_type_boolean;
 		o->data.b = 1;
-	} else if (mocha_string_equal_str(self->word_buffer, "false")) {
+	} else if (mocha_string_equal_str(&self->word_buffer, "false")) {
 		o = mocha_context_create_object(&self->context);
 		o->type = mocha_object_type_boolean;
 		o->data.b = 0;
@@ -234,8 +229,8 @@ static mocha_object* parse_object(mocha_parser* self, mocha_parse_error* error)
 	mocha_object* o = 0;
 
 	*error = get_word(self);
-	mocha_char first_char = self->word_buffer[0];
-	size_t word_len = mocha_string_length(self->word_buffer);
+	mocha_char first_char = self->word_buffer.string[0];
+	size_t word_len = self->word_buffer.count;
 
 	if (first_char == ':') {
 		o = parse_keyword(self, error);
@@ -271,6 +266,8 @@ mocha_object* mocha_parser_parse(mocha_parser* self, const mocha_char* input, si
 	self->input_buffer[input_length] = 0;
 
 	self->input = self->input_buffer;
+	self->word_buffer.string = malloc(1024);
+	self->word_buffer.count = 0;
 
 	mocha_parse_error error;
 	return parse_object(self, &error);

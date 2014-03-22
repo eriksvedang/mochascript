@@ -1,8 +1,11 @@
 #include "../include/print.h"
 #include "../include/object.h"
 #include "../include/log.h"
+#include "../include/string.h"
+
 #include <stdio.h>
 #include <stdlib.h>
+
 typedef struct string_stream {
 	char* p;
 	char* buffer;
@@ -75,7 +78,7 @@ void print_object_debug(string_stream* f, const mocha_object* o)
 			string_stream_output(f, buf);
 			break;
 		case mocha_object_type_string:
-			snprintf(buf, 256, "string");
+			snprintf(buf, 256, "\"%s\"", mocha_string_to_c(&o->data.string));
 			string_stream_output(f, buf);
 			break;
 		case mocha_object_type_keyword:

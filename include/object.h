@@ -26,13 +26,13 @@ struct mocha_vector;
 typedef struct mocha_object {
 	mocha_object_type type;
 	union {
-		struct mocha_list list;
-		struct mocha_map map;
-		struct mocha_vector vector;
+		mocha_list list;
+		mocha_map map;
+		mocha_vector vector;
 		int i;
 		float f;
 		mocha_boolean b;
-		const mocha_char* string;
+		mocha_string string;
 	} data;
 } mocha_object;
 
