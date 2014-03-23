@@ -1,6 +1,6 @@
-#include "../include/map.h"
-#include "../include/object.h"
-#include "../include/log.h"
+#include <mocha/map.h>
+#include <mocha/object.h>
+#include <mocha/log.h>
 
 #include <stdlib.h>
 

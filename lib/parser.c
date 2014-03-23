@@ -1,9 +1,9 @@
-#include "../include/parser.h"
-#include "../include/object.h"
-#include "../include/log.h"
-#include "../include/context.h"
-
-#include "../include/string.h"
+#include <mocha/parser.h>
+#include <mocha/object.h>
+#include <mocha/log.h>
+#include <mocha/context.h>
+#include <mocha/symbol.h>
+#include <mocha/string.h>
 
 #include <stdlib.h>
 
@@ -152,19 +152,7 @@ static mocha_object* parse_list(mocha_parser* self, mocha_parse_error* error)
 	return o;
 }
 
-static mocha_object* parse_keyword(mocha_parser* self, mocha_parse_error* error)
-{
-	mocha_object* o = mocha_context_create_object(&self->context);
-	o->type = mocha_object_type_keyword;
-	return o;
-}
 
-static mocha_object* parse_symbol(mocha_parser* self, mocha_parse_error* error)
-{
-	mocha_object* o = mocha_context_create_object(&self->context);
-	o->type = mocha_object_type_symbol;
-	return o;
-}
 
 static mocha_object* parse_number(mocha_parser* self, mocha_parse_error* error)
 {
@@ -198,6 +186,25 @@ static mocha_object* parse_string(mocha_parser* self, mocha_parse_error* error)
 	return o;
 }
 
+static mocha_object* parse_symbol(mocha_parser* self, mocha_parse_error* error)
+{
+	mocha_string* temp = malloc(sizeof(mocha_string));
+	mocha_string_init(temp, self->word_buffer.string, self->word_buffer.count);
+	mocha_object* o = mocha_context_create_object(&self->context);
+	mocha_symbol_init(&o->data.symbol, temp);
+	o->type = mocha_object_type_symbol;
+	return o;
+}
+
+static mocha_object* parse_keyword(mocha_parser* self, mocha_parse_error* error)
+{
+	mocha_string* temp = malloc(sizeof(mocha_string));
+	mocha_string_init(temp, self->word_buffer.string + 1, self->word_buffer.count - 1);
+	mocha_object* o = mocha_context_create_object(&self->context);
+	mocha_keyword_init(&o->data.keyword, temp);
+	o->type = mocha_object_type_keyword;
+	return o;
+}
 
 static mocha_object* parse_literal_or_symbol(mocha_parser* self, mocha_parse_error* error)
 {

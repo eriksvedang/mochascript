@@ -1,7 +1,7 @@
 #ifndef mocha_string_h
 #define mocha_string_h
 
-#include "types.h"
+#include <mocha/types.h>
 
 typedef int mocha_char;
 #include <string.h>

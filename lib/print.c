@@ -1,7 +1,7 @@
-#include "../include/print.h"
-#include "../include/object.h"
-#include "../include/log.h"
-#include "../include/string.h"
+#include <mocha/print.h>
+#include <mocha/object.h>
+#include <mocha/log.h>
+#include <mocha/string.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,13 +82,15 @@ void print_object_debug(string_stream* f, const mocha_object* o)
 			string_stream_output(f, buf);
 			break;
 		case mocha_object_type_keyword:
-			string_stream_output(f, "Keyword ");
+			snprintf(buf, 256, ":%s", mocha_string_to_c(o->data.keyword.string));
+			string_stream_output(f, buf);
 			break;
 		case mocha_object_type_boolean:
 			string_stream_output(f, o->data.b ? "true" : "false");
 			break;
 		case mocha_object_type_symbol:
-			string_stream_output(f, "Symbol");
+			snprintf(buf, 256, "%s", mocha_string_to_c(o->data.symbol.string));
+			string_stream_output(f, buf);
 			break;
 	}
 }

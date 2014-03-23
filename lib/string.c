@@ -1,4 +1,4 @@
-#include "../include/string.h"
+#include <mocha/string.h>
 #include <stdlib.h>
 
 mocha_boolean mocha_string_equal_str(const mocha_string* self, const char* cstr)

@@ -1,5 +1,5 @@
-#include "../include/runtime.h"
-#include "../include/print.h"
+#include <mocha/runtime.h>
+#include <mocha/print.h>
 
 void mocha_runtime_eval(mocha_runtime* self, const struct mocha_object* o)
 {

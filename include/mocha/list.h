@@ -1,7 +1,7 @@
 #ifndef mocha_list_h
 #define mocha_list_h
 
-#include "types.h"
+#include <mocha/types.h>
 
 struct mocha_object;
 

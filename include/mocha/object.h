@@ -1,11 +1,13 @@
 #ifndef mocha_object_h
 #define mocha_object_h
 
-#include "list.h"
-#include "map.h"
-#include "vector.h"
-#include "string.h"
-#include "types.h"
+#include <mocha/list.h>
+#include <mocha/map.h>
+#include <mocha/vector.h>
+#include <mocha/string.h>
+#include <mocha/symbol.h>
+#include <mocha/keyword.h>
+#include <mocha/types.h>
 
 typedef enum mocha_object_type {
 	mocha_object_type_list,
@@ -33,6 +35,8 @@ typedef struct mocha_object {
 		float f;
 		mocha_boolean b;
 		mocha_string string;
+		mocha_symbol symbol;
+		mocha_keyword keyword;
 	} data;
 } mocha_object;
 

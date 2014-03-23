@@ -1,7 +1,7 @@
 #ifndef mocha_map_h
 #define mocha_map_h
 
-#include "types.h"
+#include <mocha/types.h>
 
 struct mocha_object;
 

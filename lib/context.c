@@ -1,5 +1,5 @@
-#include "../include/context.h"
-#include "../include/object.h"
+#include <mocha/context.h>
+#include <mocha/object.h>
 
 #include <stdlib.h>
 

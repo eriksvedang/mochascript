@@ -3,8 +3,8 @@
 
 #include <stddef.h>
 
-#include "context.h"
-#include "string.h"
+#include <mocha/context.h>
+#include <mocha/string.h>
 
 typedef struct mocha_parser {
 	const mocha_char* input;

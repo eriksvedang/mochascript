@@ -1,8 +1,8 @@
-#include "../include/parser.h"
-#include "../include/runtime.h"
+#include <mocha/parser.h>
+#include <mocha/runtime.h>
 #include <string.h>
 #include <stdio.h>
-#include "../include/log.h"
+#include <mocha/log.h>
 
 int main(int arc, char* argv[])
 {
