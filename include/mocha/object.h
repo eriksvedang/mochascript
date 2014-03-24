@@ -18,12 +18,11 @@ typedef enum mocha_object_type {
 	mocha_object_type_string,
 	mocha_object_type_keyword,
 	mocha_object_type_boolean,
-	mocha_object_type_symbol
+	mocha_object_type_symbol,
+	mocha_object_type_internal_function
 } mocha_object_type;
 
-struct mocha_list;
-struct mocha_map;
-struct mocha_vector;
+struct mocha_type;
 
 typedef struct mocha_object {
 	mocha_object_type type;
@@ -38,6 +37,7 @@ typedef struct mocha_object {
 		mocha_symbol symbol;
 		mocha_keyword keyword;
 	} data;
+	const struct mocha_type* object_type;
 } mocha_object;
 
 #endif
