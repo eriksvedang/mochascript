@@ -14,6 +14,24 @@ MOCHA_FUNCTION(def_func)
 	return eval;
 }
 
+MOCHA_FUNCTION(if_func)
+{
+	const mocha_object* condition = mocha_runtime_eval(runtime, arguments->objects[0]);
+	if (condition->type != mocha_object_type_boolean) {
+		MOCHA_LOG("Illegal condition type");
+		return condition;
+	}
+	mocha_boolean satisfied = condition->data.b;
+	int eval_index = satisfied ? 1 : 2;
+	if (eval_index >= arguments->count) {
+		MOCHA_LOG("Missing argument!");
+		return condition;
+	}
+	const mocha_object* result = mocha_runtime_eval(runtime, arguments->objects[eval_index]);
+
+	return result;
+}
+
 MOCHA_FUNCTION(mul_func)
 {
 	int a = 1;
@@ -60,6 +78,10 @@ static void bootstrap_context(mocha_context* context)
 	fn.eval_all_arguments = mocha_false;
 	mocha_context_add_function(context, "fn", &fn);
 
+	static mocha_type if_type;
+	if_type.invoke = if_func;
+	if_type.eval_all_arguments = mocha_false;
+	mocha_context_add_function(context, "if", &if_type);
 }
 
 static const mocha_object* invoke(mocha_runtime* self, mocha_context* context, const mocha_object* fn, const mocha_list* l)
@@ -73,6 +95,10 @@ static const mocha_object* invoke(mocha_runtime* self, mocha_context* context, c
 		o = fn->object_type->invoke(self, context, &arguments_list);
 	} else if (fn->type == mocha_object_type_function) {
 		const mocha_list* args = &fn->data.function.arguments->data.list;
+		if (l->count - 1 != args->count) {
+			MOCHA_LOG("Illegal number of arguments: %d", (int)l->count - 1);
+			return fn;
+		}
 		for (size_t arg_count = 0; arg_count < args->count; ++arg_count) {
 			const mocha_object* arg = args->objects[arg_count];
 			if (arg->type != mocha_object_type_symbol) {
