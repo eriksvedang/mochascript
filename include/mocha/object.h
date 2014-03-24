@@ -8,6 +8,7 @@
 #include <mocha/symbol.h>
 #include <mocha/keyword.h>
 #include <mocha/types.h>
+#include <mocha/function.h>
 
 typedef enum mocha_object_type {
 	mocha_object_type_list,
@@ -19,6 +20,7 @@ typedef enum mocha_object_type {
 	mocha_object_type_keyword,
 	mocha_object_type_boolean,
 	mocha_object_type_symbol,
+	mocha_object_type_function,
 	mocha_object_type_internal_function
 } mocha_object_type;
 
@@ -36,6 +38,7 @@ typedef struct mocha_object {
 		mocha_string string;
 		mocha_symbol symbol;
 		mocha_keyword keyword;
+		mocha_function function;
 	} data;
 	const struct mocha_type* object_type;
 } mocha_object;

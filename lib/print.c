@@ -92,6 +92,9 @@ void print_object_debug(string_stream* f, const mocha_object* o)
 			snprintf(buf, 256, "%s", mocha_string_to_c(o->data.symbol.string));
 			string_stream_output(f, buf);
 			break;
+		case mocha_object_type_function:
+			string_stream_output(f, "fn");
+			break;
 		case mocha_object_type_internal_function:
 			string_stream_output(f, "internalfn");
 			break;

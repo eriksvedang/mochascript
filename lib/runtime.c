@@ -16,14 +16,30 @@ MOCHA_FUNCTION(def_func)
 
 MOCHA_FUNCTION(mul_func)
 {
-	int a = arguments->objects[0]->data.i;
-	int b = arguments->objects[1]->data.i;
+	int a = 1;
+	for (size_t c = 0; c < arguments->count; ++c) {
+		a *= arguments->objects[c]->data.i;
+	}
 
  	mocha_object* r = mocha_context_create_object(context);
 
  	r->type = mocha_object_type_integer;
- 	r->data.i = a * b;
+ 	r->data.i = a;
 
+	return r;
+}
+
+MOCHA_FUNCTION(fn_func)
+{
+ 	mocha_object* r = mocha_context_create_object(context);
+ 	static mocha_type fn_type;
+ 	fn_type.eval_all_arguments = mocha_true;
+ 	fn_type.invoke = 0;
+
+ 	r->type = mocha_object_type_function;
+ 	r->object_type = &fn_type;
+ 	r->data.function.arguments = arguments->objects[0];
+ 	r->data.function.code = arguments->objects[1];
 	return r;
 }
 
@@ -31,11 +47,19 @@ static void bootstrap_context(mocha_context* context)
 {
 	static mocha_type def;
 	def.invoke = def_func;
+	def.eval_all_arguments = mocha_false;
 	mocha_context_add_function(context, "def", &def);
 
 	static mocha_type mul;
 	mul.invoke = mul_func;
+	mul.eval_all_arguments = mocha_true;
 	mocha_context_add_function(context, "*", &mul);
+
+	static mocha_type fn;
+	fn.invoke = fn_func;
+	fn.eval_all_arguments = mocha_false;
+	mocha_context_add_function(context, "fn", &fn);
+
 }
 
 static const mocha_object* invoke(mocha_runtime* self, mocha_context* context, const mocha_object* fn, const mocha_list* l)
@@ -47,6 +71,17 @@ static const mocha_object* invoke(mocha_runtime* self, mocha_context* context, c
 	const mocha_object* o = 0;
 	if (fn->type == mocha_object_type_internal_function) {
 		o = fn->object_type->invoke(self, context, &arguments_list);
+	} else if (fn->type == mocha_object_type_function) {
+		const mocha_list* args = &fn->data.function.arguments->data.list;
+		for (size_t arg_count = 0; arg_count < args->count; ++arg_count) {
+			const mocha_object* arg = args->objects[arg_count];
+			if (arg->type != mocha_object_type_symbol) {
+				MOCHA_LOG("Must use symbols!");
+				return 0;
+			}
+			mocha_context_add(context, arg, l->objects[arg_count + 1]);
+		}
+		o = mocha_runtime_eval(self, fn->data.function.code);
 	}
 
 	return o;
@@ -63,6 +98,15 @@ const struct mocha_object* mocha_runtime_eval(mocha_runtime* self, const struct 
 	if (o->type == mocha_object_type_list) {
 		const mocha_list* l = &o->data.list;
 		const struct mocha_object* fn = mocha_context_lookup(&self->main_context, l->objects[0]);
+		mocha_list new_args;
+		if (fn->object_type->eval_all_arguments) {
+			const mocha_object* converted_args[32];
+			for (size_t i=1; i < l->count; ++i) {
+				converted_args[i] = mocha_runtime_eval(self, l->objects[i]);
+			}
+			mocha_list_init(&new_args, converted_args, l->count);
+			l = &new_args;
+		}
 		o = invoke(self, &self->main_context, fn, l);
 	} else {
 		if (o->type == mocha_object_type_symbol) {

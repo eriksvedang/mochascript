@@ -30,7 +30,6 @@ int main(int arc, char* argv[])
 			const struct mocha_object* x = o->data.vector.objects[i];
 			const mocha_object* r = mocha_runtime_eval(&runtime, x);
 			mocha_print_object_debug(r);
-
 		}
 	}
 }

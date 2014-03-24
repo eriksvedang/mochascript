@@ -56,5 +56,6 @@ const mocha_object* mocha_context_lookup(mocha_context* self, const mocha_object
 
 void mocha_context_init(mocha_context* self)
 {
+	self->objects = malloc(sizeof(mocha_object*) * 1024);
 	self->count = 0;
 }

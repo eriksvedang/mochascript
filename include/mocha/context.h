@@ -7,7 +7,7 @@ struct mocha_object;
 struct mocha_type;
 
 typedef struct mocha_context {
-	const struct mocha_object* objects[8];
+	const struct mocha_object** objects;
 	size_t count;
 } mocha_context;
 
