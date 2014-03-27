@@ -69,13 +69,17 @@ void print_object_debug(string_stream* f, const mocha_object* o)
 			print_array_debug(f, o->data.map.objects, o->data.map.count);
 			string_stream_output(f, "}");
 			break;
-		case mocha_object_type_integer:
-			snprintf(buf, 256, "%d", o->data.i);
-			string_stream_output(f, buf);
-			break;
-		case mocha_object_type_float:
-			snprintf(buf, 256, "%f", o->data.f);
-			string_stream_output(f, buf);
+		case mocha_object_type_number:
+			switch (o->data.number.type) {
+				case mocha_number_type_integer:
+					snprintf(buf, 256, "%d", o->data.number.data.i);
+					string_stream_output(f, buf);
+					break;
+				case mocha_number_type_float:
+					snprintf(buf, 256, "%f", o->data.number.data.f);
+					string_stream_output(f, buf);
+					break;
+			}
 			break;
 		case mocha_object_type_string:
 			snprintf(buf, 256, "\"%s\"", mocha_string_to_c(&o->data.string));
@@ -108,5 +112,5 @@ void mocha_print_object_debug(const mocha_object* o)
 	print_object_debug(&stream, o);
 	string_stream_close(&stream);
 
-	MOCHA_LOG("output:'%s'", stream.buffer);
+	MOCHA_LOG("%s", stream.buffer);
 }

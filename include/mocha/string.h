@@ -15,6 +15,7 @@ typedef struct mocha_string {
 const char* mocha_string_to_c(const mocha_string* s);
 mocha_boolean mocha_string_equal_str(const mocha_string* self, const char* cstr);
 void mocha_string_init(mocha_string* self, const mocha_char* s, size_t count);
+void mocha_string_init_from_c(mocha_string* self, const char* s);
 mocha_boolean mocha_string_equal(const mocha_string* a, const mocha_string* b);
 
 #endif

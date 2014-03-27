@@ -48,8 +48,19 @@ const char* mocha_string_to_c(const mocha_string* s)
 
 void mocha_string_init(mocha_string* self, const mocha_char* s, size_t count)
 {
-	size_t octet_count = sizeof(mocha_char) * count + 1;
+	size_t octet_count = sizeof(mocha_char) * (count + 1);
 	self->string = malloc(octet_count);
 	self->count = count;
 	memcpy(self->string, s, octet_count);
+}
+
+void mocha_string_init_from_c(mocha_string* self, const char* s)
+{
+	size_t count = strlen(s);
+	size_t octet_count = sizeof(mocha_char) * (count + 1);
+	self->string = malloc(octet_count);
+	for (size_t i=0; i<count + 1; ++i) {
+		self->string[i] = s[i];
+	}
+	self->count = count;
 }

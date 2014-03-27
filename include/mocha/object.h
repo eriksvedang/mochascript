@@ -9,13 +9,13 @@
 #include <mocha/keyword.h>
 #include <mocha/types.h>
 #include <mocha/function.h>
+#include <mocha/number.h>
 
 typedef enum mocha_object_type {
 	mocha_object_type_list,
 	mocha_object_type_map,
 	mocha_object_type_vector,
-	mocha_object_type_integer,
-	mocha_object_type_float,
+	mocha_object_type_number,
 	mocha_object_type_string,
 	mocha_object_type_keyword,
 	mocha_object_type_boolean,
@@ -32,8 +32,7 @@ typedef struct mocha_object {
 		mocha_list list;
 		mocha_map map;
 		mocha_vector vector;
-		int i;
-		float f;
+		mocha_number number;
 		mocha_boolean b;
 		mocha_string string;
 		mocha_symbol symbol;
@@ -42,5 +41,7 @@ typedef struct mocha_object {
 	} data;
 	const struct mocha_type* object_type;
 } mocha_object;
+
+mocha_boolean mocha_object_equal(const mocha_object* a, const mocha_object* b);
 
 #endif

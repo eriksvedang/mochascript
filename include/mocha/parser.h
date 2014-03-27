@@ -13,6 +13,6 @@ typedef struct mocha_parser {
 	mocha_context context;
 } mocha_parser;
 
-struct mocha_object* mocha_parser_parse(mocha_parser* self, const mocha_char* input, size_t input_length);
+const struct mocha_object* mocha_parser_parse(mocha_parser* self, const mocha_char* input, size_t input_length);
 
 #endif

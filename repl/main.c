@@ -21,15 +21,20 @@ int main(int arc, char* argv[])
 		input[i] = c_input[i];
 	}
 
-	struct mocha_object* o = mocha_parser_parse(&parser, input, input_length);
+	const mocha_object* o = mocha_parser_parse(&parser, input, input_length);
 
 	mocha_runtime runtime;
 	mocha_runtime_init(&runtime);
-	if (o->type == mocha_object_type_vector) {
-		for (size_t i = 0; i < o->data.vector.count; ++i) {
-			const struct mocha_object* x = o->data.vector.objects[i];
+	if (o->type == mocha_object_type_list) {
+		for (size_t i = 0; i < o->data.list.count; ++i) {
+			const mocha_object* x = o->data.list.objects[i];
 			const mocha_object* r = mocha_runtime_eval(&runtime, x);
-			mocha_print_object_debug(r);
+			if (i == o->data.list.count -1) {
+				mocha_print_object_debug(r);
+			}
 		}
+	} else {
+		const mocha_object* r = mocha_runtime_eval(&runtime, o);
+		mocha_print_object_debug(r);
 	}
 }

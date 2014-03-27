@@ -8,6 +8,7 @@
 mocha_object* mocha_context_create_object(mocha_context* self)
 {
 	mocha_object* o = malloc(sizeof(mocha_object));
+	o->object_type = 0;
 
 	return o;
 }
