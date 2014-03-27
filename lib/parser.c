@@ -229,6 +229,10 @@ static const mocha_object* parse_literal_or_symbol(mocha_parser* self, mocha_par
 		boolean_object->type = mocha_object_type_boolean;
 		boolean_object->data.b = 0;
 		o = boolean_object;
+	} else if (mocha_string_equal_str(&self->word_buffer, "nil")) {
+		mocha_object* nil_object = mocha_context_create_object(&self->context);
+		nil_object->type = mocha_object_type_nil;
+		o = nil_object;
 	} else if (is_numerical(first_char)) {
 		o = parse_number(self, error);
 	} else if (first_char == '"') {

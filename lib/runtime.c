@@ -270,6 +270,60 @@ MOCHA_FUNCTION(case_func)
 	return runtime->nil;
 }
 
+static const mocha_object* conj_vector(mocha_context* context, const mocha_vector* self, const mocha_object** args, size_t count)
+{
+	mocha_object* new_vector = mocha_context_create_object(context);
+	new_vector->type = mocha_object_type_vector;
+	const mocha_object* result[128];
+	memcpy(result, self->objects, sizeof(mocha_object*) * self->count);
+	memcpy(result + self->count, args, sizeof(mocha_object*) * count);
+	size_t total_count = self->count + count;
+	mocha_vector_init(&new_vector->data.vector, result, total_count);
+
+	return new_vector;
+}
+
+static const mocha_object* conj_list(mocha_context* context, const mocha_list* self, const mocha_object** args, size_t count)
+{
+	mocha_object* new_list = mocha_context_create_object(context);
+	new_list->type = mocha_object_type_list;
+	const mocha_object* result[128];
+
+	for (size_t i = 0; i < count; ++i) {
+		result[(count - i) - 1] = args[i];
+	}
+
+	size_t total_count = count;
+	if (self) {
+		memcpy(result + count, self->objects, sizeof(mocha_object*) * self->count);
+		total_count += self->count;
+	}
+	mocha_list_init(&new_list->data.list, result, total_count);
+
+	return new_list;
+}
+
+MOCHA_FUNCTION(conj_func)
+{
+	const mocha_object* sequence = arguments->objects[0];
+	const mocha_object* result;
+	switch (sequence->type) {
+		case mocha_object_type_list:
+			result = conj_list(context, &arguments->objects[0]->data.list, &arguments->objects[1], arguments->count-1);
+		break;
+		case mocha_object_type_vector:
+			result = conj_vector(context, &arguments->objects[0]->data.vector, &arguments->objects[1], arguments->count-1);
+		break;
+		case mocha_object_type_nil:
+			result = conj_list(context, 0, &arguments->objects[1], arguments->count-1);
+		break;
+		default:
+		break;
+	}
+
+	return result;
+}
+
 MOCHA_FUNCTION(quote_func)
 {
 	return arguments->objects[0];
@@ -287,6 +341,12 @@ static void bootstrap_context(mocha_context* context)
 	def.eval_all_arguments = mocha_false;
 	def.is_macro = mocha_false;
 	mocha_context_add_function(context, "def", &def);
+
+	static mocha_type conj_type;
+	conj_type.invoke = conj_func;
+	conj_type.eval_all_arguments = mocha_true;
+	conj_type.is_macro = mocha_false;
+	mocha_context_add_function(context, "conj", &conj_type);
 
 	static mocha_type let_type;
 	let_type.invoke = let_func;
