@@ -82,6 +82,34 @@ MOCHA_FUNCTION(if_func)
 	return result;
 }
 
+MOCHA_FUNCTION(let_func)
+{
+	const mocha_object* assignments = mocha_runtime_eval(runtime, arguments->objects[0]);
+	if (assignments->type != mocha_object_type_vector) {
+		MOCHA_LOG("must have vector in let!");
+		return 0;
+	}
+
+	const mocha_vector* assignment_vector = &assignments->data.vector;
+	if ((assignment_vector->count % 2) != 0) {
+		MOCHA_LOG("Wrong number of assignments");
+		return 0;
+	}
+	// create context
+	for (size_t i=0; i<assignment_vector->count; i+=2) {
+		const mocha_object* symbol = assignment_vector->objects[i];
+		if (symbol->type != mocha_object_type_symbol) {
+			MOCHA_LOG("must have symbol in let");
+		}
+
+		mocha_context_add(context, symbol, assignment_vector->objects[i+1]);
+	}
+
+	const mocha_object* result = mocha_runtime_eval(runtime, arguments->objects[1]);
+
+	return result;
+}
+
 static void number_mul(mocha_number* r, const mocha_number* a, const mocha_number* b)
 {
 	if (a->type == mocha_number_type_integer && b->type == mocha_number_type_integer) {
@@ -259,6 +287,12 @@ static void bootstrap_context(mocha_context* context)
 	def.eval_all_arguments = mocha_false;
 	def.is_macro = mocha_false;
 	mocha_context_add_function(context, "def", &def);
+
+	static mocha_type let_type;
+	let_type.invoke = let_func;
+	let_type.eval_all_arguments = mocha_false;
+	let_type.is_macro = mocha_false;
+	mocha_context_add_function(context, "let", &let_type);
 
 	static mocha_type defmacro_type;
 	defmacro_type.invoke = defn_func;
