@@ -12,6 +12,7 @@
 #include <mocha/number.h>
 
 typedef enum mocha_object_type {
+	mocha_object_type_nil,
 	mocha_object_type_list,
 	mocha_object_type_map,
 	mocha_object_type_vector,

@@ -54,6 +54,9 @@ void print_object_debug(string_stream* f, const mocha_object* o)
 	char buf[256];
 
 	switch (o->type) {
+		case mocha_object_type_nil:
+			string_stream_output(f, "nil");
+			break;
 		case mocha_object_type_list:
 			string_stream_output(f, "(");
 			print_array_debug(f, o->data.list.objects, o->data.list.count);

@@ -223,6 +223,25 @@ MOCHA_FUNCTION(equal_func)
 	return r;
 }
 
+MOCHA_FUNCTION(case_func)
+{
+	const mocha_object* compare_value = mocha_runtime_eval(runtime, arguments->objects[0]);
+	for (size_t i = 1; i < arguments->count; i += 2) {
+		const mocha_object* when_value = arguments->objects[i];
+		if (mocha_object_equal(compare_value, when_value)) {
+			const mocha_object* when_argument = mocha_runtime_eval(runtime, arguments->objects[i+1]);
+			return when_argument;
+		}
+	}
+
+	if ((arguments->count % 2) == 0) {
+		const mocha_object* default_value = mocha_runtime_eval(runtime, arguments->objects[arguments->count-1]);
+		return default_value;
+	}
+
+	return runtime->nil;
+}
+
 MOCHA_FUNCTION(quote_func)
 {
 	return arguments->objects[0];
@@ -290,6 +309,12 @@ static void bootstrap_context(mocha_context* context)
 	if_type.is_macro = mocha_false;
 	mocha_context_add_function(context, "if", &if_type);
 
+	static mocha_type case_type;
+	case_type.invoke = case_func;
+	case_type.eval_all_arguments = mocha_false;
+	case_type.is_macro = mocha_false;
+	mocha_context_add_function(context, "case", &case_type);
+
 	static mocha_type equal_type;
 	equal_type.invoke = equal_func;
 	equal_type.eval_all_arguments = mocha_true;
@@ -346,6 +371,9 @@ static const mocha_object* invoke(mocha_runtime* self, mocha_context* context, c
 void mocha_runtime_init(mocha_runtime* self)
 {
 	mocha_context_init(&self->main_context);
+	mocha_object* nil = mocha_context_create_object(&self->main_context);
+	nil->type = mocha_object_type_nil;
+	self->nil = nil;
 	bootstrap_context(&self->main_context);
 }
 

@@ -11,7 +11,7 @@ mocha_boolean mocha_object_equal(const mocha_object* a, const mocha_object* b)
 		case mocha_object_type_number:
 			return mocha_number_equal(&a->data.number, &b->data.number);
 		case mocha_object_type_string:
-			return mocha_false;
+			return mocha_string_equal(&a->data.string, &b->data.string);
 		case mocha_object_type_keyword:
 			return mocha_false;
 		case mocha_object_type_boolean:

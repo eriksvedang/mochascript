@@ -7,6 +7,7 @@ struct mocha_object;
 
 typedef struct mocha_runtime {
 	mocha_context main_context;
+	const struct mocha_object* nil;
 } mocha_runtime;
 
 void mocha_runtime_init(mocha_runtime* self);
