@@ -85,7 +85,7 @@ MOCHA_FUNCTION(if_func)
 MOCHA_FUNCTION(let_func)
 {
 	const mocha_object* assignments = mocha_runtime_eval(runtime, arguments->objects[0]);
-	if (assignments->type != mocha_object_type_vector) {
+	if (!assignments || assignments->type != mocha_object_type_vector) {
 		MOCHA_LOG("must have vector in let!");
 		return 0;
 	}
@@ -475,6 +475,9 @@ const struct mocha_object* mocha_runtime_eval(mocha_runtime* self, const struct 
 {
 	if (o->type == mocha_object_type_list) {
 		const mocha_list* l = &o->data.list;
+      if (l->count == 0) {
+         return o;
+      }
 		const struct mocha_object* fn = mocha_context_lookup(&self->main_context, l->objects[0]);
 		if (!fn) {
 			MOCHA_LOG("Couldn't find lookup");
@@ -484,7 +487,12 @@ const struct mocha_object* mocha_runtime_eval(mocha_runtime* self, const struct 
 		if (fn->object_type->eval_all_arguments) {
 			const mocha_object* converted_args[32];
 			for (size_t i=1; i < l->count; ++i) {
-				converted_args[i] = mocha_runtime_eval(self, l->objects[i]);
+				const struct mocha_object* arg = mocha_runtime_eval(self, l->objects[i]);
+            if (!arg) {
+               MOCHA_LOG("Couldn't evaluate!");
+               return 0;
+            }
+            converted_args[i] = arg;
 			}
 			mocha_list_init(&new_args, converted_args, l->count);
 			l = &new_args;

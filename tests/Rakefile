@@ -2,6 +2,7 @@ require 'colored'
 
 test_files = FileList['./*.test']
 
+`clang ../repl/*.c ../lib/*.c -I ../include/ -o mocha`
 o_files = []
 success = true
 test_files.each do |source_file|

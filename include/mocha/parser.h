@@ -8,8 +8,8 @@
 
 typedef struct mocha_parser {
 	const mocha_char* input;
+	const mocha_char* input_end;
 	mocha_char input_buffer[128];
-	mocha_string word_buffer;
 	mocha_context context;
 } mocha_parser;
 
