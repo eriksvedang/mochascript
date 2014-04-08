@@ -4,6 +4,7 @@
 #include <mocha/context.h>
 
 struct mocha_object;
+struct mocha_error;
 
 typedef struct mocha_runtime {
 	mocha_context main_context;
@@ -11,6 +12,6 @@ typedef struct mocha_runtime {
 } mocha_runtime;
 
 void mocha_runtime_init(mocha_runtime* self);
-const struct mocha_object*  mocha_runtime_eval(mocha_runtime* self, const struct mocha_object* o);
+const struct mocha_object*  mocha_runtime_eval(mocha_runtime* self, const struct mocha_object* o, struct mocha_error* error);
 
 #endif

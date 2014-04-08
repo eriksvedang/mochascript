@@ -5,14 +5,17 @@
 
 #include <mocha/context.h>
 #include <mocha/string.h>
+#include <mocha/error.h>
 
 typedef struct mocha_parser {
 	const mocha_char* input;
 	const mocha_char* input_end;
 	mocha_char input_buffer[128];
 	mocha_context context;
+	mocha_error error;
 } mocha_parser;
 
-const struct mocha_object* mocha_parser_parse(mocha_parser* self, const mocha_char* input, size_t input_length);
+void mocha_parser_init(mocha_parser* self, const mocha_char* input, size_t input_length);
+const struct mocha_object* mocha_parser_parse(mocha_parser* self, mocha_error* error);
 
 #endif

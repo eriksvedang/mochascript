@@ -115,5 +115,5 @@ void mocha_print_object_debug(const mocha_object* o)
 	print_object_debug(&stream, o);
 	string_stream_close(&stream);
 
-	MOCHA_LOG("%s", stream.buffer);
+	MOCHA_OUTPUT("%s", stream.buffer);
 }

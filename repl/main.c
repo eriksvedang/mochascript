@@ -32,7 +32,6 @@ int read_line(mocha_char* s, int max_length)
 	return input_length;
 }
 
-
 int main(int arc, char* argv[])
 {
 	mocha_parser parser;
@@ -41,6 +40,8 @@ int main(int arc, char* argv[])
 
 	const int max_length = 1024;
 	mocha_char input[max_length];
+	mocha_error error;
+	mocha_error_init(&error);
 
 	while (1) {
 		MOCHA_OUTPUT("repl=> ");
@@ -48,14 +49,25 @@ int main(int arc, char* argv[])
 		if (input_length == -1) {
 			break;
 		}
-		const mocha_object* o = mocha_parser_parse(&parser, input, input_length);
-		if (o) {
-			const mocha_object* r = mocha_runtime_eval(&runtime, o);
-			if (r) {
-				mocha_print_object_debug(r);
+
+		mocha_parser_init(&parser, input, input_length);
+
+		const mocha_object* o;
+		do {
+			o = mocha_parser_parse(&parser, &error);
+			if (o) {
+				const mocha_object* r = mocha_runtime_eval(&runtime, o, &error);
+				if (r) {
+					mocha_print_object_debug(r);
+					MOCHA_OUTPUT(" ");
+				}
 			}
-		} else {
-			MOCHA_LOG("Error!");
+		} while (o != 0 && error.code == mocha_error_code_ok);
+		MOCHA_LOG("");
+
+		if (error.code != mocha_error_code_ok) {
+			mocha_error_show(&error);
+			mocha_error_init(&error);
 		}
 	}
 }

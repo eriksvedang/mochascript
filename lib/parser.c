@@ -7,17 +7,6 @@
 
 #include <stdlib.h>
 
-#define MOCHA_ERR(err_number, err_string) add_error(err_number, err_string); return 0;
-
-typedef struct mocha_parse_error {
-	int code;
-} mocha_parse_error;
-
-static void add_error(int err_number, const char* err_string)
-{
-	MOCHA_LOG("%d: '%s'", err_number, err_string);
-}
-
 static mocha_boolean is_space(mocha_char ch)
 {
 	return mocha_strchr("\t\n\r, ", ch) != 0;
@@ -25,7 +14,7 @@ static mocha_boolean is_space(mocha_char ch)
 
 static mocha_boolean is_alpha(mocha_char ch)
 {
-	return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z');
+	return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (mocha_strchr("!#$*+-./?", ch) != 0);
 }
 
 static mocha_boolean is_numerical(mocha_char ch)
@@ -84,17 +73,16 @@ size_t mocha_string_length(const mocha_char* s)
 }
 
 
-static const mocha_object* parse_object(mocha_parser* self, mocha_parse_error* error);
+static const mocha_object* parse_object(mocha_parser* self, mocha_error* error);
 
-static int parse_array(mocha_parser* self, mocha_char end_char, mocha_parse_error* error, const mocha_object* array[], size_t array_max_count)
+static int parse_array(mocha_parser* self, mocha_char end_char, mocha_error* error, const mocha_object* array[], size_t array_max_count)
 {
 	int count = 0;
 
 	while (count < array_max_count) {
 		mocha_char ch = skip_space(self);
 		if (!ch) {
-			error->code = -23;
-			MOCHA_ERR(-23, "Unexpected end");
+			MOCHA_ERR(mocha_error_code_unexpected_end);
 		} else if (ch == end_char) {
 			return count;
 		}
@@ -111,7 +99,7 @@ static int parse_array(mocha_parser* self, mocha_char end_char, mocha_parse_erro
 }
 
 
-static mocha_object* parse_map(mocha_parser* self, mocha_parse_error* error)
+static mocha_object* parse_map(mocha_parser* self, mocha_error* error)
 {
 	const mocha_object* args[128];
 	int count = parse_array(self, '}', error, args, 128);
@@ -122,7 +110,7 @@ static mocha_object* parse_map(mocha_parser* self, mocha_parse_error* error)
 	return o;
 }
 
-static mocha_object* parse_vector(mocha_parser* self, mocha_parse_error* error)
+static mocha_object* parse_vector(mocha_parser* self, mocha_error* error)
 {
 	const mocha_object* args[128];
 	int count = parse_array(self, ']', error, args, 128);
@@ -132,7 +120,7 @@ static mocha_object* parse_vector(mocha_parser* self, mocha_parse_error* error)
 	return o;
 }
 
-static mocha_object* parse_list(mocha_parser* self, mocha_parse_error* error)
+static mocha_object* parse_list(mocha_parser* self, mocha_error* error)
 {
 	const mocha_object* args[128];
 	int count = parse_array(self, ')', error, args, 128);
@@ -146,7 +134,7 @@ static mocha_object* parse_list(mocha_parser* self, mocha_parse_error* error)
 	return o;
 }
 
-static int parse_word(mocha_parser* self, mocha_char* char_buffer, int max_symbol_length)
+static int parse_word(mocha_parser* self, mocha_char* char_buffer, int max_symbol_length, mocha_error* error)
 {
 	mocha_string word_buffer;
 
@@ -162,7 +150,7 @@ static int parse_word(mocha_parser* self, mocha_char* char_buffer, int max_symbo
 			break;
 		}
 		if (word_buffer.count == max_symbol_length) {
-			MOCHA_ERR(9, "Too long symbol");
+			MOCHA_ERR(mocha_error_code_symbol_too_long);
 		}
 		word_buffer.string[word_buffer.count++] = ch;
 	}
@@ -170,11 +158,14 @@ static int parse_word(mocha_parser* self, mocha_char* char_buffer, int max_symbo
 	return word_buffer.count;
 }
 
-static mocha_object* parse_number(mocha_parser* self, mocha_parse_error* error)
+static mocha_object* parse_number(mocha_parser* self, mocha_error* error)
 {
 	const int max_symbol_length = 64;
 	static mocha_char char_buffer[max_symbol_length];
-	int length = parse_word(self, char_buffer, max_symbol_length);
+	int length = parse_word(self, char_buffer, max_symbol_length, error);
+	if (error->code != mocha_error_code_ok) {
+		return 0;
+	}
 
 	mocha_string word_buffer;
 	word_buffer.string = char_buffer;
@@ -194,7 +185,7 @@ static mocha_object* parse_number(mocha_parser* self, mocha_parse_error* error)
 	return o;
 }
 
-static mocha_object* parse_string(mocha_parser* self, mocha_parse_error* error)
+static mocha_object* parse_string(mocha_parser* self, mocha_error* error)
 {
 	mocha_object* o = mocha_context_create_object(&self->context);
 	o->type = mocha_object_type_string;
@@ -202,10 +193,9 @@ static mocha_object* parse_string(mocha_parser* self, mocha_parse_error* error)
 	mocha_char temp[1024];
 	size_t count = 0;
 	mocha_char ch;
-	read_char(self);
 	while ((ch = read_char(self)) != '"') {
 		if (!ch) {
-			MOCHA_ERR(1, "Missing end \" for string");
+			MOCHA_ERR(mocha_error_code_missing_end_of_string);
 		}
 		temp[count++] = ch;
 	}
@@ -225,13 +215,16 @@ static const mocha_object* create_symbol(mocha_context* context, const mocha_str
 	return o;
 }
 
-static const mocha_object* parse_symbol(mocha_parser* self, mocha_parse_error* error)
+static const mocha_object* parse_symbol(mocha_parser* self, mocha_error* error)
 {
 	const mocha_object* o;
 
 	const int max_symbol_length = 64;
 	static mocha_char char_buffer[max_symbol_length];
-	int length = parse_word(self, char_buffer, max_symbol_length);
+	int length = parse_word(self, char_buffer, max_symbol_length, error);
+	if (error->code != mocha_error_code_ok) {
+		return 0;
+	}
 
 	mocha_string word_buffer;
 	word_buffer.string = char_buffer;
@@ -257,11 +250,14 @@ static const mocha_object* parse_symbol(mocha_parser* self, mocha_parse_error* e
 	return o;
 }
 
-static mocha_object* parse_keyword(mocha_parser* self, mocha_parse_error* error)
+static mocha_object* parse_keyword(mocha_parser* self, mocha_error* error)
 {
 	const int max_symbol_length = 64;
 	static mocha_char char_buffer[max_symbol_length];
-	int length = parse_word(self, char_buffer, max_symbol_length);
+	int length = parse_word(self, char_buffer, max_symbol_length, error);
+	if (error->code != mocha_error_code_ok) {
+		return 0;
+	}
 
 	mocha_string* word_buffer = malloc(sizeof(mocha_string));
 	word_buffer->string = char_buffer;
@@ -273,23 +269,7 @@ static mocha_object* parse_keyword(mocha_parser* self, mocha_parse_error* error)
 	return o;
 }
 
-static const mocha_object* parse_literal_or_symbol(mocha_parser* self, mocha_parse_error* error, mocha_char first_char)
-{
-	const mocha_object* o;
-
-	if (is_numerical(first_char)) {
-		o = parse_number(self, error);
-	} else if (first_char == '"') {
-		o = parse_string(self, error);
-	} else {
-		o = parse_symbol(self, error);
-	}
-
-
-	return o;
-}
-
-static mocha_object* parse_tick(mocha_parser* self, mocha_parse_error* error)
+static mocha_object* parse_tick(mocha_parser* self, mocha_error* error)
 {
 	const mocha_object* do_not_eval = parse_object(self, error);
 
@@ -309,7 +289,7 @@ static mocha_object* parse_tick(mocha_parser* self, mocha_parse_error* error)
 	return l;
 }
 
-static const mocha_object* parse_object(mocha_parser* self, mocha_parse_error* error)
+static const mocha_object* parse_object(mocha_parser* self, mocha_error* error)
 {
 	const mocha_object* o = 0;
 
@@ -333,15 +313,25 @@ static const mocha_object* parse_object(mocha_parser* self, mocha_parse_error* e
 		case '\'':
 			o = parse_tick(self, error);
 			break;
+		case '\"':
+			o = parse_string(self, error);
+			break;
 		default:
-			unread_char(self, first_char);
-			o = parse_literal_or_symbol(self, error, first_char);
+			if (is_numerical(first_char)) {
+				unread_char(self, first_char);
+				o = parse_number(self, error);
+			} else if (is_alpha(first_char)) {
+				unread_char(self, first_char);
+				o = parse_symbol(self, error);
+			} else {
+				MOCHA_ERR(mocha_error_code_unexpected_character);
+			}
 	}
 
 	return o;
 }
 
-const mocha_object* mocha_parser_parse(mocha_parser* self, const mocha_char* input, size_t input_length)
+void mocha_parser_init(mocha_parser* self, const mocha_char* input, size_t input_length)
 {
 	for (size_t i=0; i<input_length; ++i) {
 		self->input_buffer[i] = input[i];
@@ -350,8 +340,11 @@ const mocha_object* mocha_parser_parse(mocha_parser* self, const mocha_char* inp
 
 	self->input = self->input_buffer;
 	self->input_end = self->input + input_length;
+}
 
-	mocha_parse_error error;
-	const mocha_object* o = parse_object(self, &error);
+const mocha_object* mocha_parser_parse(mocha_parser* self, mocha_error* error)
+{
+	const mocha_object* o;
+	o = parse_object(self, error);
 	return o;
 }
