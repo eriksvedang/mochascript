@@ -4,6 +4,8 @@
 #include <mocha/type.h>
 #include <mocha/log.h>
 #include <mocha/error.h>
+#include <stdlib.h>
+
 
 static const mocha_object* fn(mocha_runtime* self, mocha_context* context, const mocha_object* arguments, const mocha_object* body)
 {
@@ -99,17 +101,20 @@ MOCHA_FUNCTION(let_func)
 		MOCHA_LOG("Wrong number of assignments");
 		return 0;
 	}
-	// create context
+
+	mocha_context* new_context = mocha_runtime_create_context(runtime);
 	for (size_t i=0; i<assignment_vector->count; i+=2) {
 		const mocha_object* symbol = assignment_vector->objects[i];
 		if (symbol->type != mocha_object_type_symbol) {
 			MOCHA_LOG("must have symbol in let");
 		}
 
-		mocha_context_add(context, symbol, assignment_vector->objects[i+1]);
+		mocha_context_add(new_context, symbol, assignment_vector->objects[i+1]);
 	}
 
 	const mocha_object* result = mocha_runtime_eval(runtime, arguments->objects[1], &error);
+
+	mocha_runtime_pop_context(runtime);
 
 	return result;
 }
@@ -274,6 +279,19 @@ MOCHA_FUNCTION(case_func)
 	return runtime->nil;
 }
 
+static const mocha_object* conj_map(mocha_context* context, const mocha_map* self, const mocha_map* arg)
+{
+	mocha_object* new_map = mocha_context_create_object(context);
+	new_map->type = mocha_object_type_map;
+	const mocha_object* result[128];
+	memcpy(result, self->objects, sizeof(mocha_object*) * self->count);
+	memcpy(result + self->count, arg->objects, sizeof(mocha_object*) * arg->count);
+	size_t total_count = self->count + arg->count;
+	mocha_map_init(&new_map->data.map, result, total_count);
+
+	return new_map;
+}
+
 static const mocha_object* conj_vector(mocha_context* context, const mocha_vector* self, const mocha_object** args, size_t count)
 {
 	mocha_object* new_vector = mocha_context_create_object(context);
@@ -320,6 +338,9 @@ MOCHA_FUNCTION(conj_func)
 			break;
 		case mocha_object_type_nil:
 			result = conj_list(context, 0, &arguments->objects[1], arguments->count-1);
+			break;
+		case mocha_object_type_map:
+			result = conj_map(context, &arguments->objects[0]->data.map, &arguments->objects[1]->data.map);
 			break;
 		default:
 			break;
@@ -449,13 +470,14 @@ static const mocha_object* invoke(mocha_runtime* self, mocha_context* context, c
 			MOCHA_LOG("Illegal number of arguments: %d", (int)l->count - 1);
 			return fn;
 		}
+		mocha_context* new_context = mocha_runtime_create_context(self);
 		for (size_t arg_count = 0; arg_count < args->count; ++arg_count) {
 			const mocha_object* arg = args->objects[arg_count];
 			if (arg->type != mocha_object_type_symbol) {
 				MOCHA_LOG("Must use symbols!");
 				return 0;
 			}
-			mocha_context_add(context, arg, l->objects[arg_count + 1]);
+			mocha_context_add(new_context, arg, l->objects[arg_count + 1]);
 		}
 		mocha_error error;
 		o = mocha_runtime_eval(self, fn->data.function.code, &error);
@@ -463,6 +485,7 @@ static const mocha_object* invoke(mocha_runtime* self, mocha_context* context, c
 			MOCHA_LOG("MACRO!");
 			o = mocha_runtime_eval(self, o, &error);
 		}
+		mocha_runtime_pop_context(self);
 	}
 
 	return o;
@@ -470,12 +493,36 @@ static const mocha_object* invoke(mocha_runtime* self, mocha_context* context, c
 
 void mocha_runtime_init(mocha_runtime* self)
 {
-	mocha_context_init(&self->main_context);
-	mocha_object* nil = mocha_context_create_object(&self->main_context);
+	self->context = 0;
+	const int max_depth = 32;
+	self->contexts = malloc(sizeof(mocha_context) * max_depth);
+	self->stack_depth = 0;
+	mocha_runtime_create_context(self);
+	mocha_object* nil = mocha_context_create_object(self->context);
 	nil->type = mocha_object_type_nil;
 	self->nil = nil;
-	bootstrap_context(&self->main_context);
+	bootstrap_context(self->context);
 }
+
+mocha_context* mocha_runtime_create_context(mocha_runtime* self)
+{
+	mocha_context* new_context = &self->contexts[self->stack_depth++];
+	mocha_context_init(new_context, self->context);
+	self->context = new_context;
+
+	return new_context;
+}
+
+void mocha_runtime_pop_context(mocha_runtime* self)
+{
+	--self->stack_depth;
+	if (self->stack_depth == 0) {
+		return;
+	}
+	mocha_context* next_context = &self->contexts[self->stack_depth - 1];
+	self->context = next_context;
+}
+
 
 const struct mocha_object* mocha_runtime_eval(mocha_runtime* self, const struct mocha_object* o, mocha_error* error)
 {
@@ -484,7 +531,7 @@ const struct mocha_object* mocha_runtime_eval(mocha_runtime* self, const struct 
 		if (l->count == 0) {
 			return o;
 		}
-		const struct mocha_object* fn = mocha_context_lookup(&self->main_context, l->objects[0]);
+		const struct mocha_object* fn = mocha_context_lookup(self->context, l->objects[0]);
 		if (!fn) {
 			MOCHA_LOG("Couldn't find lookup");
 			return 0;
@@ -503,10 +550,10 @@ const struct mocha_object* mocha_runtime_eval(mocha_runtime* self, const struct 
 			mocha_list_init(&new_args, converted_args, l->count);
 			l = &new_args;
 		}
-		o = invoke(self, &self->main_context, fn, l);
+		o = invoke(self, self->context, fn, l);
 	} else {
 		if (o->type == mocha_object_type_symbol) {
-			o = mocha_context_lookup(&self->main_context, o);
+			o = mocha_context_lookup(self->context, o);
 		}
 	}
 

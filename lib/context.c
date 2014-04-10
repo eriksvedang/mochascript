@@ -41,7 +41,7 @@ void mocha_context_add_function(mocha_context* self, const char* name, const str
 	mocha_context_add(self, key, value);
 }
 
-const mocha_object* mocha_context_lookup(mocha_context* self, const mocha_object* o)
+const mocha_object* mocha_context_lookup(const mocha_context* self, const mocha_object* o)
 {
 	for (size_t i=0; i<self->count; i+=2) {
 		const mocha_object* key = self->objects[i];
@@ -52,11 +52,15 @@ const mocha_object* mocha_context_lookup(mocha_context* self, const mocha_object
 		}
 	}
 
+	if (self->parent) {
+		return mocha_context_lookup(self->parent, o);
+	}
 	return 0;
 }
 
-void mocha_context_init(mocha_context* self)
+void mocha_context_init(mocha_context* self, const mocha_context* parent)
 {
+	self->parent = parent;
 	self->objects = malloc(sizeof(mocha_object*) * 1024);
 	self->count = 0;
 }

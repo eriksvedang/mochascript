@@ -259,8 +259,7 @@ static mocha_object* parse_keyword(mocha_parser* self, mocha_error* error)
 	}
 
 	mocha_string* word_buffer = malloc(sizeof(mocha_string));
-	word_buffer->string = char_buffer;
-	word_buffer->count = length;
+	mocha_string_init(word_buffer, char_buffer, length);
 
 	mocha_object* o = mocha_context_create_object(&self->context);
 	mocha_keyword_init(&o->data.keyword, word_buffer);
