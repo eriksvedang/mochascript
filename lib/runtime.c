@@ -7,18 +7,18 @@
 
 static const mocha_object* fn(mocha_runtime* self, mocha_context* context, const mocha_object* arguments, const mocha_object* body)
 {
- 	mocha_object* r = mocha_context_create_object(context);
- 	static mocha_type fn_type;
- 	fn_type.eval_all_arguments = mocha_true;
- 	fn_type.invoke = 0;
+	mocha_object* r = mocha_context_create_object(context);
+	static mocha_type fn_type;
+	fn_type.eval_all_arguments = mocha_true;
+	fn_type.invoke = 0;
 
- 	r->type = mocha_object_type_function;
- 	r->object_type = &fn_type;
- 	r->data.function.arguments = arguments;
- 	r->data.function.code = body;
+	r->type = mocha_object_type_function;
+	r->object_type = &fn_type;
+	r->data.function.arguments = arguments;
+	r->data.function.code = body;
 
- 	return r;
- }
+	return r;
+}
 
 MOCHA_FUNCTION(fn_func)
 {
@@ -28,7 +28,7 @@ MOCHA_FUNCTION(fn_func)
 
 static const mocha_object* def(mocha_runtime* runtime, mocha_context* context, const mocha_object* name, const mocha_object* body)
 {
-   mocha_error error;
+	mocha_error error;
 	const mocha_object* eval = mocha_runtime_eval(runtime, body, &error);
 	mocha_context_add(context, name, eval);
 	return eval;
@@ -50,16 +50,16 @@ MOCHA_FUNCTION(defn_func)
 
 MOCHA_FUNCTION(defmacro_func)
 {
- 	mocha_object* func = mocha_context_create_object(context);
- 	static mocha_type macro_type;
- 	macro_type.eval_all_arguments = mocha_false;
- 	macro_type.is_macro = mocha_true;
- 	macro_type.invoke = 0;
+	mocha_object* func = mocha_context_create_object(context);
+	static mocha_type macro_type;
+	macro_type.eval_all_arguments = mocha_false;
+	macro_type.is_macro = mocha_true;
+	macro_type.invoke = 0;
 
- 	func->type = mocha_object_type_function;
- 	func->object_type = &macro_type;
- 	func->data.function.arguments = arguments->objects[1];
- 	func->data.function.code = arguments->objects[2];
+	func->type = mocha_object_type_function;
+	func->object_type = &macro_type;
+	func->data.function.arguments = arguments->objects[1];
+	func->data.function.code = arguments->objects[2];
 
 	def(runtime, context, arguments->objects[0], func);
 
@@ -68,7 +68,7 @@ MOCHA_FUNCTION(defmacro_func)
 
 MOCHA_FUNCTION(if_func)
 {
-   mocha_error error;
+	mocha_error error;
 	const mocha_object* condition = mocha_runtime_eval(runtime, arguments->objects[0], &error);
 	if (condition->type != mocha_object_type_boolean) {
 		MOCHA_LOG("Illegal condition type");
@@ -87,7 +87,7 @@ MOCHA_FUNCTION(if_func)
 
 MOCHA_FUNCTION(let_func)
 {
-   mocha_error error;
+	mocha_error error;
 	const mocha_object* assignments = mocha_runtime_eval(runtime, arguments->objects[0], &error);
 	if (!assignments || assignments->type != mocha_object_type_vector) {
 		MOCHA_LOG("must have vector in let!");
@@ -139,9 +139,9 @@ MOCHA_FUNCTION(mul_func)
 		number_mul(&result, &result, &arguments->objects[c]->data.number);
 	}
 
- 	mocha_object* r = mocha_context_create_object(context);
- 	r->type = mocha_object_type_number;
- 	r->data.number = result;
+	mocha_object* r = mocha_context_create_object(context);
+	r->type = mocha_object_type_number;
+	r->data.number = result;
 
 	return r;
 }
@@ -185,10 +185,10 @@ static void number_div(mocha_number* r, const mocha_number* a, const mocha_numbe
 
 MOCHA_FUNCTION(add_func)
 {
- 	mocha_object* r = mocha_context_create_object(context);
- 	r->type = mocha_object_type_number;
- 	r->data.number.data.i = 0;
- 	r->data.number.type = mocha_number_type_integer;
+	mocha_object* r = mocha_context_create_object(context);
+	r->type = mocha_object_type_number;
+	r->data.number.data.i = 0;
+	r->data.number.type = mocha_number_type_integer;
 
 	for (size_t c = 0; c < arguments->count; ++c) {
 		number_add(&r->data.number, &r->data.number, &arguments->objects[c]->data.number);
@@ -200,9 +200,9 @@ MOCHA_FUNCTION(add_func)
 
 MOCHA_FUNCTION(dec_func)
 {
- 	mocha_object* r = mocha_context_create_object(context);
- 	r->type = mocha_object_type_number;
- 	r->data.number.data.i = 0;
+	mocha_object* r = mocha_context_create_object(context);
+	r->type = mocha_object_type_number;
+	r->data.number.data.i = 0;
 
 	int start_index = 0;
 	if (arguments->count > 1) {
@@ -219,8 +219,8 @@ MOCHA_FUNCTION(dec_func)
 
 MOCHA_FUNCTION(div_func)
 {
- 	mocha_object* r = mocha_context_create_object(context);
- 	r->type = mocha_object_type_number;
+	mocha_object* r = mocha_context_create_object(context);
+	r->type = mocha_object_type_number;
 
 	r->data.number.data.i = 1;
 
@@ -238,26 +238,25 @@ MOCHA_FUNCTION(div_func)
 
 MOCHA_FUNCTION(equal_func)
 {
- 	mocha_object* r = mocha_context_create_object(context);
- 	r->type = mocha_object_type_boolean;
+	mocha_object* r = mocha_context_create_object(context);
+	r->type = mocha_object_type_boolean;
+	r->data.b = mocha_true;
 
 	const mocha_object* source = arguments->objects[0];
 	for (size_t i=1; i<arguments->count; ++i) {
 		const mocha_object* v = arguments->objects[i];
 		if (!mocha_object_equal(source, v)) {
-		 	r->data.b = mocha_false;
+			r->data.b = mocha_false;
 			break;
 		}
 	}
-
-	r->data.b = mocha_true;
 
 	return r;
 }
 
 MOCHA_FUNCTION(case_func)
 {
-   mocha_error error;
+	mocha_error error;
 	const mocha_object* compare_value = mocha_runtime_eval(runtime, arguments->objects[0], &error);
 	for (size_t i = 1; i < arguments->count; i += 2) {
 		const mocha_object* when_value = arguments->objects[i];
@@ -315,15 +314,15 @@ MOCHA_FUNCTION(conj_func)
 	switch (sequence->type) {
 		case mocha_object_type_list:
 			result = conj_list(context, &arguments->objects[0]->data.list, &arguments->objects[1], arguments->count-1);
-		break;
+			break;
 		case mocha_object_type_vector:
 			result = conj_vector(context, &arguments->objects[0]->data.vector, &arguments->objects[1], arguments->count-1);
-		break;
+			break;
 		case mocha_object_type_nil:
 			result = conj_list(context, 0, &arguments->objects[1], arguments->count-1);
-		break;
+			break;
 		default:
-		break;
+			break;
 	}
 
 	return result;
@@ -336,7 +335,7 @@ MOCHA_FUNCTION(quote_func)
 
 MOCHA_FUNCTION(unquote_func)
 {
-   mocha_error error;
+	mocha_error error;
 	return mocha_runtime_eval(runtime, arguments->objects[0], &error);
 }
 
@@ -458,7 +457,7 @@ static const mocha_object* invoke(mocha_runtime* self, mocha_context* context, c
 			}
 			mocha_context_add(context, arg, l->objects[arg_count + 1]);
 		}
-      mocha_error error;
+		mocha_error error;
 		o = mocha_runtime_eval(self, fn->data.function.code, &error);
 		if (fn->object_type->is_macro) {
 			MOCHA_LOG("MACRO!");
@@ -482,9 +481,9 @@ const struct mocha_object* mocha_runtime_eval(mocha_runtime* self, const struct 
 {
 	if (o->type == mocha_object_type_list) {
 		const mocha_list* l = &o->data.list;
-      if (l->count == 0) {
-         return o;
-      }
+		if (l->count == 0) {
+			return o;
+		}
 		const struct mocha_object* fn = mocha_context_lookup(&self->main_context, l->objects[0]);
 		if (!fn) {
 			MOCHA_LOG("Couldn't find lookup");
@@ -495,11 +494,11 @@ const struct mocha_object* mocha_runtime_eval(mocha_runtime* self, const struct 
 			const mocha_object* converted_args[32];
 			for (size_t i = 1; i < l->count; ++i) {
 				const struct mocha_object* arg = mocha_runtime_eval(self, l->objects[i], error);
-            if (!arg) {
-               MOCHA_LOG("Couldn't evaluate!");
-               return 0;
-            }
-            converted_args[i] = arg;
+				if (!arg) {
+					MOCHA_LOG("Couldn't evaluate!");
+					return 0;
+				}
+				converted_args[i] = arg;
 			}
 			mocha_list_init(&new_args, converted_args, l->count);
 			l = &new_args;

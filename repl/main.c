@@ -8,6 +8,8 @@
 #include <mocha/log.h>
 
 
+#include <stdlib.h>
+
 int read_line(mocha_char* s, int max_length)
 {
 	const int c_max_length = 1024;
@@ -32,16 +34,30 @@ int read_line(mocha_char* s, int max_length)
 	return input_length;
 }
 
-int main(int arc, char* argv[])
+static const mocha_object* parse_and_print(mocha_runtime* runtime, mocha_parser* parser, mocha_boolean print_only_last, mocha_error* error)
 {
-	mocha_parser parser;
-	mocha_runtime runtime;
-	mocha_runtime_init(&runtime);
+	const mocha_object* o = mocha_parser_parse(parser, error);
+	if (o && o->type == mocha_object_type_list) {
+		const mocha_list* list = &o->data.list;
+		for (int i = 0; i < list->count; ++i) {
+			const mocha_object* r = mocha_runtime_eval(runtime, list->objects[i], error);
+			if (r && (!print_only_last || i == list->count - 1)) {
+				mocha_print_object_debug(r);
+				MOCHA_OUTPUT(" ");
+			}
+		}
+		MOCHA_LOG("");
+	} else {
+		o = 0;
+	}
 
+	return o;
+}
+
+static void repl(mocha_runtime* runtime, mocha_parser* parser, mocha_error* error)
+{
 	const int max_length = 1024;
 	mocha_char input[max_length];
-	mocha_error error;
-	mocha_error_init(&error);
 
 	while (1) {
 		MOCHA_OUTPUT("repl=> ");
@@ -50,24 +66,58 @@ int main(int arc, char* argv[])
 			break;
 		}
 
-		mocha_parser_init(&parser, input, input_length);
+		mocha_parser_init(parser, input, input_length);
 
 		const mocha_object* o;
-		do {
-			o = mocha_parser_parse(&parser, &error);
-			if (o) {
-				const mocha_object* r = mocha_runtime_eval(&runtime, o, &error);
-				if (r) {
-					mocha_print_object_debug(r);
-					MOCHA_OUTPUT(" ");
-				}
-			}
-		} while (o != 0 && error.code == mocha_error_code_ok);
-		MOCHA_LOG("");
+		o = parse_and_print(runtime, parser, mocha_false, error);
 
-		if (error.code != mocha_error_code_ok) {
-			mocha_error_show(&error);
-			mocha_error_init(&error);
+		if (error->code != mocha_error_code_ok) {
+			mocha_error_show(error);
+			mocha_error_init(error);
 		}
+	}
+}
+
+static const mocha_object* eval_file(mocha_runtime* runtime, mocha_parser* parser, const char* filename, mocha_error* error)
+{
+	FILE* fp = fopen(filename, "rt");
+	if (!fp) {
+		MOCHA_ERR_STRING(mocha_error_code_file_not_found, filename);
+	}
+	const int max_buffer_count = 128 * 1024;
+	char* temp_buffer = malloc(max_buffer_count * sizeof(char));
+	mocha_char* temp_input = malloc(max_buffer_count * sizeof(mocha_char));
+	int character_count = fread(temp_buffer, 1, max_buffer_count, fp);
+	for (int i=0; i<character_count; ++i) {
+		temp_input[i] = temp_buffer[i];
+	}
+	mocha_parser_init(parser, temp_input, character_count);
+	const mocha_object* o = parse_and_print(runtime, parser, mocha_true, error);
+	MOCHA_LOG("");
+	free(temp_input);
+	free(temp_buffer);
+
+
+	return o;
+}
+
+int main(int argc, char* argv[])
+{
+	mocha_parser parser;
+	mocha_runtime runtime;
+	mocha_runtime_init(&runtime);
+
+	mocha_error error;
+	mocha_error_init(&error);
+
+	if (argc > 1) {
+		const char* filename = argv[1];
+		eval_file(&runtime, &parser, filename, &error);
+	} else {
+		repl(&runtime, &parser, &error);
+	}
+
+	if (error.code != mocha_error_code_ok) {
+		mocha_error_show(&error);
 	}
 }

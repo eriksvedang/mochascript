@@ -5,8 +5,7 @@ static const char* error_string(mocha_error_code code)
 {
 	const char* s;
 
-	switch (code)
-	{
+	switch (code) {
 		case mocha_error_code_unexpected_end:
 			s = "Unexpected end";
 			break;
@@ -21,6 +20,9 @@ static const char* error_string(mocha_error_code code)
 			break;
 		case mocha_error_code_unexpected_character:
 			s = "Unexpected character";
+			break;
+		case mocha_error_code_file_not_found:
+			s = "File not found";
 			break;
 	}
 

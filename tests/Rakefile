@@ -4,6 +4,7 @@ test_files = FileList['./*.test']
 `clang ../lib/*.c -I ../include -o mocha ../repl/*.c`
 
 `clang ../repl/*.c ../lib/*.c -I ../include/ -o mocha`
+
 o_files = []
 success = true
 test_files.each do |source_file|
@@ -21,12 +22,12 @@ test_files.each do |source_file|
 		f.close
 		array = data.split "---\n"
 		source_text = array[0]
-		expected_output = array[1]
+		expected_output = array[1].strip
 
 
 		output_dir = 'temp/'
 
-		if not File.directory?(output_dir) 
+		if not File.directory?(output_dir)
 			Dir.mkdir output_dir
 		end
 		mocha_file = "#{output_dir}#{test_name}.mocha"
@@ -37,15 +38,16 @@ test_files.each do |source_file|
 		o.write source_text
 		o.close
 
-		arguments = "< #{mocha_file} > #{output_file} 2> #{error_file}"
+		arguments = "#{mocha_file} > #{output_file} 2> #{error_file}"
 		command = "./mocha #{arguments}"
 		`#{command}`
 
 		output_file = File.new output_file
 		output_text = output_file.read
+		output_text.strip!
 		output_file.close
 
-		if expected_output == output_text 
+		if expected_output == output_text
 			puts "OK".bold.green
 		else
 			puts "Failed!".red

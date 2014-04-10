@@ -1,4 +1,5 @@
 #include <mocha/object.h>
+#include <mocha/log.h>
 
 mocha_boolean mocha_object_equal(const mocha_object* a, const mocha_object* b)
 {
@@ -6,8 +7,7 @@ mocha_boolean mocha_object_equal(const mocha_object* a, const mocha_object* b)
 		return mocha_false;
 	}
 
-	switch (a->type)
-	{
+	switch (a->type) {
 		case mocha_object_type_number:
 			return mocha_number_equal(&a->data.number, &b->data.number);
 		case mocha_object_type_string:
