@@ -1,4 +1,5 @@
 #include <mocha/number.h>
+#include <mocha/log.h>
 
 mocha_boolean mocha_number_equal(const mocha_number* a, const mocha_number* b)
 {
@@ -12,6 +13,8 @@ mocha_boolean mocha_number_equal(const mocha_number* a, const mocha_number* b)
 			return a->data.i == b->data.i;
 		case mocha_number_type_float:
 			return a->data.f == b->data.f;
+		default:
+			return mocha_false;
 	}
 }
 

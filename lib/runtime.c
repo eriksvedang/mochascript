@@ -238,19 +238,18 @@ MOCHA_FUNCTION(div_func)
 
 MOCHA_FUNCTION(equal_func)
 {
- 	mocha_object* r = mocha_context_create_object(context);
- 	r->type = mocha_object_type_boolean;
+   mocha_object* r = mocha_context_create_object(context);
+   r->type = mocha_object_type_boolean;
+   r->data.b = mocha_true;
 
 	const mocha_object* source = arguments->objects[0];
 	for (size_t i=1; i<arguments->count; ++i) {
 		const mocha_object* v = arguments->objects[i];
 		if (!mocha_object_equal(source, v)) {
-		 	r->data.b = mocha_false;
+         r->data.b = mocha_false;
 			break;
 		}
 	}
-
-	r->data.b = mocha_true;
 
 	return r;
 }

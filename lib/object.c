@@ -1,4 +1,5 @@
 #include <mocha/object.h>
+#include <mocha/log.h>
 
 mocha_boolean mocha_object_equal(const mocha_object* a, const mocha_object* b)
 {
