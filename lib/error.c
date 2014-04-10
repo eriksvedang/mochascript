@@ -5,8 +5,7 @@ static const char* error_string(mocha_error_code code)
 {
 	const char* s;
 
-	switch (code)
-	{
+	switch (code) {
 		case mocha_error_code_unexpected_end:
 			s = "Unexpected end";
 			break;
