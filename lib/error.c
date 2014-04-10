@@ -22,6 +22,9 @@ static const char* error_string(mocha_error_code code)
 		case mocha_error_code_unexpected_character:
 			s = "Unexpected character";
 			break;
+		case mocha_error_code_file_not_found:
+			s = "File not found";
+			break;
 	}
 
 	return s;

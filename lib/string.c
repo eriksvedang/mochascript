@@ -1,4 +1,5 @@
 #include <mocha/string.h>
+#include <mocha/log.h>
 #include <stdlib.h>
 
 mocha_boolean mocha_string_equal_str(const mocha_string* self, const char* cstr)
@@ -7,11 +8,9 @@ mocha_boolean mocha_string_equal_str(const mocha_string* self, const char* cstr)
 	const char* s = cstr;
 	mocha_char ch;
 
-	while ((ch = *p++) != 0) {
-		if (*s == 0) {
-			return mocha_false;
-		}
-		if (ch != *s++) {
+	size_t c_len = strlen(cstr);
+	for (int i=0; i<c_len; ++i) {
+		if (s[i] != p[i]) {
 			return mocha_false;
 		}
 	}

@@ -14,7 +14,7 @@ static mocha_boolean is_space(mocha_char ch)
 
 static mocha_boolean is_alpha(mocha_char ch)
 {
-	return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (mocha_strchr("!#$*+-./?", ch) != 0);
+	return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (mocha_strchr("_!#$*+-=./?", ch) != 0);
 }
 
 static mocha_boolean is_numerical(mocha_char ch)
@@ -81,10 +81,10 @@ static int parse_array(mocha_parser* self, mocha_char end_char, mocha_error* err
 
 	while (count < array_max_count) {
 		mocha_char ch = skip_space(self);
-		if (!ch) {
-			MOCHA_ERR(mocha_error_code_unexpected_end);
-		} else if (ch == end_char) {
+		if (ch == end_char) {
 			return count;
+		} else if (!ch) {
+			MOCHA_ERR(mocha_error_code_unexpected_end);
 		}
 		unread_char(self, ch);
 		const mocha_object* o = parse_object(self, error);
@@ -229,7 +229,6 @@ static const mocha_object* parse_symbol(mocha_parser* self, mocha_error* error)
 	mocha_string word_buffer;
 	word_buffer.string = char_buffer;
 	word_buffer.count = length;
-
 	if (mocha_string_equal_str(&word_buffer, "true")) {
 		mocha_object* boolean_object = mocha_context_create_object(&self->context);
 		boolean_object->type = mocha_object_type_boolean;
@@ -344,7 +343,15 @@ void mocha_parser_init(mocha_parser* self, const mocha_char* input, size_t input
 
 const mocha_object* mocha_parser_parse(mocha_parser* self, mocha_error* error)
 {
-	const mocha_object* o;
-	o = parse_object(self, error);
+	const mocha_object* args[128];
+	int count = parse_array(self, 0, error, args, 128);
+	if (error->code != 0) {
+		return 0;
+	}
+
+	mocha_object* o = mocha_context_create_object(&self->context);
+	mocha_list_init(&o->data.list, args, count);
+	o->type = mocha_object_type_list;
+
 	return o;
 }
