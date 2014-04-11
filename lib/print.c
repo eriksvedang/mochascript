@@ -103,7 +103,8 @@ void print_object_debug(string_stream* f, const mocha_object* o)
 			string_stream_output(f, "fn");
 			break;
 		case mocha_object_type_internal_function:
-			string_stream_output(f, "internalfn");
+			snprintf(buf, 256, "internalfn: '%s'", o->debug_string);
+			string_stream_output(f, buf);
 			break;
 	}
 }

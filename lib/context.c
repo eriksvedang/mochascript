@@ -25,6 +25,7 @@ void mocha_context_add_function(mocha_context* self, const char* name, const str
 	mocha_object* value = mocha_context_create_object(self);
 	value->type = mocha_object_type_internal_function;
 	value->object_type = type;
+	value->debug_string = name;
 
 	mocha_object* key = mocha_context_create_object(self);
 	mocha_char buf[80];

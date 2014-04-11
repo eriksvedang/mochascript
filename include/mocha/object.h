@@ -41,6 +41,7 @@ typedef struct mocha_object {
 		mocha_function function;
 	} data;
 	const struct mocha_type* object_type;
+	const char* debug_string;
 } mocha_object;
 
 mocha_boolean mocha_object_equal(const mocha_object* a, const mocha_object* b);

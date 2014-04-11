@@ -351,18 +351,34 @@ MOCHA_FUNCTION(conj_func)
 	return result;
 }
 
-static const mocha_object* cons_vector(mocha_context* context, const mocha_vector* self, const mocha_object** args, int count)
+static const mocha_object* cons_vector(mocha_context* context, const mocha_vector* self, const mocha_object** args)
 {
+	const int count = 1;
 	mocha_object* new_vector = mocha_context_create_object(context);
-	new_vector->type = mocha_object_type_vector;
+	new_vector->type = mocha_object_type_list;
 	const mocha_object* result[128];
 	memcpy(result, args, sizeof(mocha_object*) * count);
 	memcpy(result + count, self->objects, sizeof(mocha_object*) * self->count);
 	size_t total_count = self->count + count;
-	mocha_vector_init(&new_vector->data.vector, result, total_count);
+	mocha_list_init(&new_vector->data.list, result, total_count);
 
 	return new_vector;
 }
+
+static const mocha_object* cons_list(mocha_context* context, const mocha_list* self, const mocha_object** args)
+{
+	mocha_object* new_vector = mocha_context_create_object(context);
+	new_vector->type = mocha_object_type_list;
+	const mocha_object* result[128];
+	const int count = 1;
+	memcpy(result, args, sizeof(mocha_object*) * count);
+	memcpy(result + count, self->objects, sizeof(mocha_object*) * self->count);
+	size_t total_count = self->count + count;
+	mocha_list_init(&new_vector->data.list, result, total_count);
+
+	return new_vector;
+}
+
 
 MOCHA_FUNCTION(cons_func)
 {
@@ -370,15 +386,20 @@ MOCHA_FUNCTION(cons_func)
 	const mocha_object* result;
 	switch (sequence->type) {
 		case mocha_object_type_list:
-			result = 0;
+			result = cons_list(context, &sequence->data.list, &arguments->objects[0]);
 			break;
 		case mocha_object_type_vector:
-			result = cons_vector(context, &sequence->data.vector, &arguments->objects[0], arguments->count-1);
+			result = cons_vector(context, &sequence->data.vector, &arguments->objects[0]);
 			break;
-		case mocha_object_type_nil:
-			result = 0;
-			break;
+		case mocha_object_type_nil: {
+			mocha_object* new_vector = mocha_context_create_object(context);
+			new_vector->type = mocha_object_type_list;
+			mocha_list_init(&new_vector->data.list, &arguments->objects[0], 1);
+			result = new_vector;
+		}
+		break;
 		case mocha_object_type_map:
+			MOCHA_LOG("BAD MAP");
 			result = 0;
 			break;
 		default:
@@ -520,7 +541,7 @@ MOCHA_FUNCTION(empty_func)
 	name##_def.invoke = name##_func; \
 	name##_def.eval_all_arguments = eval_arguments; \
 	name##_def.is_macro = mocha_false; \
-
+ 
 #define MOCHA_DEF_FUNCTION(name, eval_arguments) \
 	MOCHA_DEF_FUNCTION_HELPER(name, eval_arguments) \
 	mocha_context_add_function(context, #name, &name##_def);
@@ -650,7 +671,8 @@ const struct mocha_object* mocha_runtime_eval(mocha_runtime* self, const struct 
 			for (size_t i = 1; i < l->count; ++i) {
 				const struct mocha_object* arg = mocha_runtime_eval(self, l->objects[i], error);
 				if (!arg) {
-					MOCHA_LOG("Couldn't evaluate!");
+					MOCHA_LOG("Couldn't evaluate:");
+					mocha_print_object_debug(l->objects[i]);
 					return 0;
 				}
 				converted_args[i] = arg;
@@ -659,6 +681,10 @@ const struct mocha_object* mocha_runtime_eval(mocha_runtime* self, const struct 
 			l = &new_args;
 		}
 		o = invoke(self, self->context, fn, l);
+		if (!o) {
+			MOCHA_LOG("Invoke returned 0:");
+			mocha_print_object_debug(fn);
+		}
 	} else {
 		if (o->type == mocha_object_type_symbol) {
 			o = mocha_context_lookup(self->context, o);
