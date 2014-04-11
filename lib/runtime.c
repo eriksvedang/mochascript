@@ -79,8 +79,9 @@ MOCHA_FUNCTION(if_func)
 	mocha_boolean satisfied = condition->data.b;
 	int eval_index = satisfied ? 1 : 2;
 	if (eval_index >= arguments->count) {
-		MOCHA_LOG("Missing argument!");
-		return condition;
+		mocha_object* r = mocha_context_create_object(context);
+		r->type = mocha_object_type_nil;
+		return r;
 	}
 	const mocha_object* result = mocha_runtime_eval(runtime, arguments->objects[eval_index], &error);
 
@@ -349,6 +350,118 @@ MOCHA_FUNCTION(conj_func)
 	return result;
 }
 
+static const mocha_object* cons_vector(mocha_context* context, const mocha_vector* self, const mocha_object** args, int count)
+{
+	mocha_object* new_vector = mocha_context_create_object(context);
+	new_vector->type = mocha_object_type_vector;
+	const mocha_object* result[128];
+	memcpy(result, args, sizeof(mocha_object*) * count);
+	memcpy(result + count, self->objects, sizeof(mocha_object*) * self->count);
+	size_t total_count = self->count + count;
+	mocha_vector_init(&new_vector->data.vector, result, total_count);
+
+	return new_vector;
+}
+
+MOCHA_FUNCTION(cons_func)
+{
+	const mocha_object* sequence = arguments->objects[1];
+	const mocha_object* result;
+	switch (sequence->type) {
+		case mocha_object_type_list:
+			result = 0;
+			break;
+		case mocha_object_type_vector:
+			result = cons_vector(context, &sequence->data.vector, &arguments->objects[0], arguments->count-1);
+			break;
+		case mocha_object_type_nil:
+			result = 0;
+			break;
+		case mocha_object_type_map:
+			result = 0;
+			break;
+		default:
+			break;
+	}
+
+	return result;
+}
+
+
+static const mocha_object* rest_vector(mocha_context* context, const mocha_vector* self)
+{
+	mocha_object* new_vector = mocha_context_create_object(context);
+	if (self->count > 0) {
+		new_vector->type = mocha_object_type_vector;
+		const mocha_object* result[128];
+		memcpy(result, self->objects + 1, sizeof(mocha_object*) * (self->count - 1));
+		size_t total_count = self->count - 1;
+		mocha_vector_init(&new_vector->data.vector, result, total_count);
+	} else {
+		new_vector->type = mocha_object_type_nil;
+	}
+
+	return new_vector;
+}
+
+
+
+MOCHA_FUNCTION(rest_func)
+{
+	const mocha_object* sequence = arguments->objects[0];
+	const mocha_object* result;
+	switch (sequence->type) {
+		case mocha_object_type_list:
+			result = 0;
+			break;
+		case mocha_object_type_vector:
+			result = rest_vector(context, &sequence->data.vector);
+			break;
+		case mocha_object_type_nil:
+			result = 0;
+			break;
+		case mocha_object_type_map:
+			result = 0;
+			break;
+		default:
+			break;
+	}
+
+	return result;
+}
+
+static const mocha_object* first_vector(mocha_context* context, const mocha_vector* self)
+{
+	return self->objects[0];
+}
+
+
+
+MOCHA_FUNCTION(first_func)
+{
+	const mocha_object* sequence = arguments->objects[0];
+	const mocha_object* result;
+	switch (sequence->type) {
+		case mocha_object_type_list:
+			result = 0;
+			break;
+		case mocha_object_type_vector:
+			result = first_vector(context, &sequence->data.vector);
+			break;
+		case mocha_object_type_nil:
+			result = 0;
+			break;
+		case mocha_object_type_map:
+			result = 0;
+			break;
+		default:
+			break;
+	}
+
+	return result;
+}
+
+
 MOCHA_FUNCTION(quote_func)
 {
 	return arguments->objects[0];
@@ -360,99 +473,83 @@ MOCHA_FUNCTION(unquote_func)
 	return mocha_runtime_eval(runtime, arguments->objects[0], &error);
 }
 
+MOCHA_FUNCTION(not_func)
+{
+	const mocha_object* argument = arguments->objects[0];
+	if (argument->type != mocha_object_type_boolean) {
+		// error->code = mocha_error_code_expected_boolean_value;
+		return 0;
+	}
+	mocha_object* inverted = mocha_context_create_object(context);
+	inverted->type = mocha_object_type_boolean;
+	inverted->data.b = !argument->data.b;
+
+	return inverted;
+}
+
+MOCHA_FUNCTION(empty_func)
+{
+	const mocha_object* sequence = arguments->objects[0];
+	mocha_boolean is_empty = mocha_true;
+
+	switch (sequence->type) {
+		case mocha_object_type_list:
+			break;
+		case mocha_object_type_vector:
+			is_empty = sequence->data.vector.count == 0;
+			break;
+		case mocha_object_type_nil:
+			break;
+		case mocha_object_type_map:
+			break;
+		default:
+			break;
+	}
+
+	mocha_object* empty = mocha_context_create_object(context);
+	empty->type = mocha_object_type_boolean;
+	empty->data.b = is_empty;
+
+	return empty;
+
+}
+
+#define MOCHA_DEF_FUNCTION_HELPER(name, eval_arguments) \
+	static mocha_type name##_def; \
+	name##_def.invoke = name##_func; \
+	name##_def.eval_all_arguments = eval_arguments; \
+	name##_def.is_macro = mocha_false; \
+
+#define MOCHA_DEF_FUNCTION(name, eval_arguments) \
+	MOCHA_DEF_FUNCTION_HELPER(name, eval_arguments) \
+	mocha_context_add_function(context, #name, &name##_def);
+
+#define MOCHA_DEF_FUNCTION_EX(name, exported_name, eval_arguments) \
+	MOCHA_DEF_FUNCTION_HELPER(name, eval_arguments) \
+	mocha_context_add_function(context, exported_name, &name##_def);
+
 static void bootstrap_context(mocha_context* context)
 {
-	static mocha_type def;
-	def.invoke = def_func;
-	def.eval_all_arguments = mocha_false;
-	def.is_macro = mocha_false;
-	mocha_context_add_function(context, "def", &def);
-
-	static mocha_type conj_type;
-	conj_type.invoke = conj_func;
-	conj_type.eval_all_arguments = mocha_true;
-	conj_type.is_macro = mocha_false;
-	mocha_context_add_function(context, "conj", &conj_type);
-
-	static mocha_type let_type;
-	let_type.invoke = let_func;
-	let_type.eval_all_arguments = mocha_false;
-	let_type.is_macro = mocha_false;
-	mocha_context_add_function(context, "let", &let_type);
-
-	static mocha_type defmacro_type;
-	defmacro_type.invoke = defn_func;
-	defmacro_type.eval_all_arguments = mocha_false;
-	defmacro_type.is_macro = mocha_false;
-	mocha_context_add_function(context, "defmacro", &defmacro_type);
-
-	static mocha_type defn;
-	defn.invoke = defn_func;
-	defn.eval_all_arguments = mocha_false;
-	defn.is_macro = mocha_false;
-	mocha_context_add_function(context, "defn", &defn);
-
-	static mocha_type mul;
-	mul.invoke = mul_func;
-	mul.eval_all_arguments = mocha_true;
-	mul.is_macro = mocha_false;
-	mocha_context_add_function(context, "*", &mul);
-
-	static mocha_type add;
-	add.invoke = add_func;
-	add.eval_all_arguments = mocha_true;
-	add.is_macro = mocha_false;
-	mocha_context_add_function(context, "+", &add);
-
-	static mocha_type dec;
-	dec.invoke = dec_func;
-	dec.eval_all_arguments = mocha_true;
-	dec.is_macro = mocha_false;
-	mocha_context_add_function(context, "-", &dec);
-
-	static mocha_type div;
-	div.invoke = div_func;
-	div.eval_all_arguments = mocha_true;
-	div.is_macro = mocha_false;
-	mocha_context_add_function(context, "/", &div);
-
-
-	static mocha_type fn;
-	fn.invoke = fn_func;
-	fn.eval_all_arguments = mocha_false;
-	fn.is_macro = mocha_false;
-	mocha_context_add_function(context, "fn", &fn);
-
-	static mocha_type if_type;
-	if_type.invoke = if_func;
-	if_type.eval_all_arguments = mocha_false;
-	if_type.is_macro = mocha_false;
-	mocha_context_add_function(context, "if", &if_type);
-
-	static mocha_type case_type;
-	case_type.invoke = case_func;
-	case_type.eval_all_arguments = mocha_false;
-	case_type.is_macro = mocha_false;
-	mocha_context_add_function(context, "case", &case_type);
-
-	static mocha_type equal_type;
-	equal_type.invoke = equal_func;
-	equal_type.eval_all_arguments = mocha_true;
-	equal_type.is_macro = mocha_false;
-	mocha_context_add_function(context, "=", &equal_type);
-
-
-	static mocha_type quote_type;
-	quote_type.invoke = quote_func;
-	quote_type.eval_all_arguments = mocha_false;
-	quote_type.is_macro = mocha_false;
-	mocha_context_add_function(context, "quote", &quote_type);
-
-	static mocha_type unquote_type;
-	unquote_type.invoke = unquote_func;
-	unquote_type.eval_all_arguments = mocha_false;
-	unquote_type.is_macro = mocha_false;
-	mocha_context_add_function(context, "unquote", &unquote_type);
+	MOCHA_DEF_FUNCTION(def, mocha_false);
+	MOCHA_DEF_FUNCTION(conj, mocha_true);
+	MOCHA_DEF_FUNCTION(cons, mocha_true);
+	MOCHA_DEF_FUNCTION(first, mocha_true);
+	MOCHA_DEF_FUNCTION(rest, mocha_true);
+	MOCHA_DEF_FUNCTION(let, mocha_false);
+	MOCHA_DEF_FUNCTION(defmacro, mocha_false);
+	MOCHA_DEF_FUNCTION(defn, mocha_false);
+	MOCHA_DEF_FUNCTION_EX(mul, "*", mocha_true);
+	MOCHA_DEF_FUNCTION_EX(add, "+", mocha_true);
+	MOCHA_DEF_FUNCTION_EX(dec, "-", mocha_true);
+	MOCHA_DEF_FUNCTION_EX(div, "/", mocha_true);
+	MOCHA_DEF_FUNCTION_EX(equal, "=", mocha_true);
+	MOCHA_DEF_FUNCTION_EX(empty, "empty?", mocha_true);
+	MOCHA_DEF_FUNCTION(fn, mocha_false);
+	MOCHA_DEF_FUNCTION(if, mocha_false);
+	MOCHA_DEF_FUNCTION(case, mocha_false);
+	MOCHA_DEF_FUNCTION(quote, mocha_false);
+	MOCHA_DEF_FUNCTION(unquote, mocha_false);
+	MOCHA_DEF_FUNCTION(not, mocha_true);
 }
 
 static const mocha_object* invoke(mocha_runtime* self, mocha_context* context, const mocha_object* fn, const mocha_list* l)
@@ -533,7 +630,8 @@ const struct mocha_object* mocha_runtime_eval(mocha_runtime* self, const struct 
 		}
 		const struct mocha_object* fn = mocha_context_lookup(self->context, l->objects[0]);
 		if (!fn) {
-			MOCHA_LOG("Couldn't find lookup");
+			MOCHA_LOG("Couldn't find lookup:");
+			mocha_print_object_debug(l->objects[0]);
 			return 0;
 		}
 		mocha_list new_args;
