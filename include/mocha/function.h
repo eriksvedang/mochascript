@@ -4,10 +4,12 @@
 #include <mocha/types.h>
 
 struct mocha_object;
+struct mocha_context;
 
 typedef struct mocha_function {
 	const struct mocha_object* arguments;
 	const struct mocha_object* code;
+	struct mocha_context* context;
 } mocha_function;
 
 #endif

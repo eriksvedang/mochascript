@@ -17,6 +17,7 @@ static const mocha_object* fn(mocha_runtime* self, mocha_context* context, const
 	r->type = mocha_object_type_function;
 	r->object_type = &fn_type;
 	r->data.function.arguments = arguments;
+	r->data.function.context = self->context;
 	r->data.function.code = body;
 
 	return r;
@@ -567,6 +568,7 @@ static const mocha_object* invoke(mocha_runtime* self, mocha_context* context, c
 			MOCHA_LOG("Illegal number of arguments: %d", (int)l->count - 1);
 			return fn;
 		}
+		mocha_runtime_push_context(self, fn->data.function.context);
 		mocha_context* new_context = mocha_runtime_create_context(self);
 		for (size_t arg_count = 0; arg_count < args->count; ++arg_count) {
 			const mocha_object* arg = args->objects[arg_count];
@@ -582,6 +584,7 @@ static const mocha_object* invoke(mocha_runtime* self, mocha_context* context, c
 			MOCHA_LOG("MACRO!");
 			o = mocha_runtime_eval(self, o, &error);
 		}
+		mocha_runtime_pop_context(self);
 		mocha_runtime_pop_context(self);
 	}
 
@@ -608,6 +611,13 @@ mocha_context* mocha_runtime_create_context(mocha_runtime* self)
 	self->context = new_context;
 
 	return new_context;
+}
+
+void mocha_runtime_push_context(mocha_runtime* self, mocha_context* context)
+{
+	//self->contexts[self->stack_depth++] = context;
+	self->stack_depth++;
+	self->context = context;
 }
 
 void mocha_runtime_pop_context(mocha_runtime* self)
