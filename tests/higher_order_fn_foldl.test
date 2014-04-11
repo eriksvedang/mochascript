@@ -1,7 +1,0 @@
-(def my-foldl
-  (fn [f xs]
-    (if (not (empty? xs))
-      (cons (f (first xs)) (my-foldl f (rest xs))))))
-(my-foldl (fn [x] (* 10 x)) [1 2 3])
----
-[10 20 30]
