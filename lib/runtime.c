@@ -360,6 +360,20 @@ MOCHA_FUNCTION(unquote_func)
 	return mocha_runtime_eval(runtime, arguments->objects[0], &error);
 }
 
+MOCHA_FUNCTION(not_func)
+{
+	const mocha_object* argument = arguments->objects[0];
+	if (argument->type != mocha_object_type_boolean) {
+		// error->code = mocha_error_code_expected_boolean_value;
+		return 0;
+	}
+	mocha_object* inverted = mocha_context_create_object(context);
+	inverted->type = mocha_object_type_boolean;
+	inverted->data.b = !argument->data.b;
+
+	return inverted;
+}
+
 #define MOCHA_DEF_FUNCTION_HELPER(name, eval_arguments) \
 	static mocha_type name##_def; \
 	name##_def.invoke = name##_func; \
@@ -385,12 +399,13 @@ static void bootstrap_context(mocha_context* context)
 	MOCHA_DEF_FUNCTION_EX(add, "+", mocha_true);
 	MOCHA_DEF_FUNCTION_EX(dec, "-", mocha_true);
 	MOCHA_DEF_FUNCTION_EX(div, "/", mocha_true);
+	MOCHA_DEF_FUNCTION_EX(equal, "=", mocha_true);
 	MOCHA_DEF_FUNCTION(fn, mocha_false);
 	MOCHA_DEF_FUNCTION(if, mocha_false);
 	MOCHA_DEF_FUNCTION(case, mocha_false);
-	MOCHA_DEF_FUNCTION_EX(equal, "=", mocha_true);
 	MOCHA_DEF_FUNCTION(quote, mocha_false);
 	MOCHA_DEF_FUNCTION(unquote, mocha_false);
+	MOCHA_DEF_FUNCTION(not, mocha_true);
 }
 
 static const mocha_object* invoke(mocha_runtime* self, mocha_context* context, const mocha_object* fn, const mocha_list* l)
