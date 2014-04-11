@@ -386,6 +386,50 @@ MOCHA_FUNCTION(cons_func)
 	return result;
 }
 
+
+static const mocha_object* rest_vector(mocha_context* context, const mocha_vector* self)
+{
+	mocha_object* new_vector = mocha_context_create_object(context);
+	if (self->count > 0) {
+		new_vector->type = mocha_object_type_vector;
+		const mocha_object* result[128];
+		memcpy(result, self->objects + 1, sizeof(mocha_object*) * (self->count - 1));
+		size_t total_count = self->count - 1;
+		mocha_vector_init(&new_vector->data.vector, result, total_count);
+	} else {
+		new_vector->type = mocha_object_type_nil;
+	}
+
+	return new_vector;
+}
+
+
+
+MOCHA_FUNCTION(rest_func)
+{
+	const mocha_object* sequence = arguments->objects[0];
+	const mocha_object* result;
+	switch (sequence->type) {
+		case mocha_object_type_list:
+			result = 0;
+			break;
+		case mocha_object_type_vector:
+			result = rest_vector(context, &sequence->data.vector);
+			break;
+		case mocha_object_type_nil:
+			result = 0;
+			break;
+		case mocha_object_type_map:
+			result = 0;
+			break;
+		default:
+			break;
+	}
+
+	return result;
+}
+
+
 MOCHA_FUNCTION(quote_func)
 {
 	return arguments->objects[0];
@@ -430,6 +474,7 @@ static void bootstrap_context(mocha_context* context)
 	MOCHA_DEF_FUNCTION(def, mocha_false);
 	MOCHA_DEF_FUNCTION(conj, mocha_true);
 	MOCHA_DEF_FUNCTION(cons, mocha_true);
+	MOCHA_DEF_FUNCTION(rest, mocha_true);
 	MOCHA_DEF_FUNCTION(let, mocha_false);
 	MOCHA_DEF_FUNCTION(defmacro, mocha_false);
 	MOCHA_DEF_FUNCTION(defn, mocha_false);
