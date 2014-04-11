@@ -455,6 +455,33 @@ MOCHA_FUNCTION(not_func)
 	return inverted;
 }
 
+MOCHA_FUNCTION(empty_func)
+{
+	const mocha_object* sequence = arguments->objects[0];
+	mocha_boolean is_empty = mocha_true;
+
+	switch (sequence->type) {
+		case mocha_object_type_list:
+			break;
+		case mocha_object_type_vector:
+			is_empty = sequence->data.vector.count == 0;
+			break;
+		case mocha_object_type_nil:
+			break;
+		case mocha_object_type_map:
+			break;
+		default:
+			break;
+	}
+
+	mocha_object* empty = mocha_context_create_object(context);
+	empty->type = mocha_object_type_boolean;
+	empty->data.b = is_empty;
+
+	return empty;
+
+}
+
 #define MOCHA_DEF_FUNCTION_HELPER(name, eval_arguments) \
 	static mocha_type name##_def; \
 	name##_def.invoke = name##_func; \
@@ -483,6 +510,7 @@ static void bootstrap_context(mocha_context* context)
 	MOCHA_DEF_FUNCTION_EX(dec, "-", mocha_true);
 	MOCHA_DEF_FUNCTION_EX(div, "/", mocha_true);
 	MOCHA_DEF_FUNCTION_EX(equal, "=", mocha_true);
+	MOCHA_DEF_FUNCTION_EX(empty, "empty?", mocha_true);
 	MOCHA_DEF_FUNCTION(fn, mocha_false);
 	MOCHA_DEF_FUNCTION(if, mocha_false);
 	MOCHA_DEF_FUNCTION(case, mocha_false);
