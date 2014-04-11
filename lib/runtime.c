@@ -79,8 +79,9 @@ MOCHA_FUNCTION(if_func)
 	mocha_boolean satisfied = condition->data.b;
 	int eval_index = satisfied ? 1 : 2;
 	if (eval_index >= arguments->count) {
-		MOCHA_LOG("Missing argument!");
-		return condition;
+		mocha_object* r = mocha_context_create_object(context);
+		r->type = mocha_object_type_nil;
+		return r;
 	}
 	const mocha_object* result = mocha_runtime_eval(runtime, arguments->objects[eval_index], &error);
 
@@ -429,6 +430,37 @@ MOCHA_FUNCTION(rest_func)
 	return result;
 }
 
+static const mocha_object* first_vector(mocha_context* context, const mocha_vector* self)
+{
+	return self->objects[0];
+}
+
+
+
+MOCHA_FUNCTION(first_func)
+{
+	const mocha_object* sequence = arguments->objects[0];
+	const mocha_object* result;
+	switch (sequence->type) {
+		case mocha_object_type_list:
+			result = 0;
+			break;
+		case mocha_object_type_vector:
+			result = first_vector(context, &sequence->data.vector);
+			break;
+		case mocha_object_type_nil:
+			result = 0;
+			break;
+		case mocha_object_type_map:
+			result = 0;
+			break;
+		default:
+			break;
+	}
+
+	return result;
+}
+
 
 MOCHA_FUNCTION(quote_func)
 {
@@ -501,6 +533,7 @@ static void bootstrap_context(mocha_context* context)
 	MOCHA_DEF_FUNCTION(def, mocha_false);
 	MOCHA_DEF_FUNCTION(conj, mocha_true);
 	MOCHA_DEF_FUNCTION(cons, mocha_true);
+	MOCHA_DEF_FUNCTION(first, mocha_true);
 	MOCHA_DEF_FUNCTION(rest, mocha_true);
 	MOCHA_DEF_FUNCTION(let, mocha_false);
 	MOCHA_DEF_FUNCTION(defmacro, mocha_false);
@@ -597,7 +630,8 @@ const struct mocha_object* mocha_runtime_eval(mocha_runtime* self, const struct 
 		}
 		const struct mocha_object* fn = mocha_context_lookup(self->context, l->objects[0]);
 		if (!fn) {
-			MOCHA_LOG("Couldn't find lookup");
+			MOCHA_LOG("Couldn't find lookup:");
+			mocha_print_object_debug(l->objects[0]);
 			return 0;
 		}
 		mocha_list new_args;
