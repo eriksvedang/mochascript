@@ -360,99 +360,37 @@ MOCHA_FUNCTION(unquote_func)
 	return mocha_runtime_eval(runtime, arguments->objects[0], &error);
 }
 
+#define MOCHA_DEF_FUNCTION_HELPER(name, eval_arguments) \
+	static mocha_type name##_def; \
+	name##_def.invoke = name##_func; \
+	name##_def.eval_all_arguments = eval_arguments; \
+	name##_def.is_macro = mocha_false; \
+
+#define MOCHA_DEF_FUNCTION(name, eval_arguments) \
+	MOCHA_DEF_FUNCTION_HELPER(name, eval_arguments) \
+	mocha_context_add_function(context, #name, &name##_def);
+
+#define MOCHA_DEF_FUNCTION_EX(name, exported_name, eval_arguments) \
+	MOCHA_DEF_FUNCTION_HELPER(name, eval_arguments) \
+	mocha_context_add_function(context, exported_name, &name##_def);
+
 static void bootstrap_context(mocha_context* context)
 {
-	static mocha_type def;
-	def.invoke = def_func;
-	def.eval_all_arguments = mocha_false;
-	def.is_macro = mocha_false;
-	mocha_context_add_function(context, "def", &def);
-
-	static mocha_type conj_type;
-	conj_type.invoke = conj_func;
-	conj_type.eval_all_arguments = mocha_true;
-	conj_type.is_macro = mocha_false;
-	mocha_context_add_function(context, "conj", &conj_type);
-
-	static mocha_type let_type;
-	let_type.invoke = let_func;
-	let_type.eval_all_arguments = mocha_false;
-	let_type.is_macro = mocha_false;
-	mocha_context_add_function(context, "let", &let_type);
-
-	static mocha_type defmacro_type;
-	defmacro_type.invoke = defn_func;
-	defmacro_type.eval_all_arguments = mocha_false;
-	defmacro_type.is_macro = mocha_false;
-	mocha_context_add_function(context, "defmacro", &defmacro_type);
-
-	static mocha_type defn;
-	defn.invoke = defn_func;
-	defn.eval_all_arguments = mocha_false;
-	defn.is_macro = mocha_false;
-	mocha_context_add_function(context, "defn", &defn);
-
-	static mocha_type mul;
-	mul.invoke = mul_func;
-	mul.eval_all_arguments = mocha_true;
-	mul.is_macro = mocha_false;
-	mocha_context_add_function(context, "*", &mul);
-
-	static mocha_type add;
-	add.invoke = add_func;
-	add.eval_all_arguments = mocha_true;
-	add.is_macro = mocha_false;
-	mocha_context_add_function(context, "+", &add);
-
-	static mocha_type dec;
-	dec.invoke = dec_func;
-	dec.eval_all_arguments = mocha_true;
-	dec.is_macro = mocha_false;
-	mocha_context_add_function(context, "-", &dec);
-
-	static mocha_type div;
-	div.invoke = div_func;
-	div.eval_all_arguments = mocha_true;
-	div.is_macro = mocha_false;
-	mocha_context_add_function(context, "/", &div);
-
-
-	static mocha_type fn;
-	fn.invoke = fn_func;
-	fn.eval_all_arguments = mocha_false;
-	fn.is_macro = mocha_false;
-	mocha_context_add_function(context, "fn", &fn);
-
-	static mocha_type if_type;
-	if_type.invoke = if_func;
-	if_type.eval_all_arguments = mocha_false;
-	if_type.is_macro = mocha_false;
-	mocha_context_add_function(context, "if", &if_type);
-
-	static mocha_type case_type;
-	case_type.invoke = case_func;
-	case_type.eval_all_arguments = mocha_false;
-	case_type.is_macro = mocha_false;
-	mocha_context_add_function(context, "case", &case_type);
-
-	static mocha_type equal_type;
-	equal_type.invoke = equal_func;
-	equal_type.eval_all_arguments = mocha_true;
-	equal_type.is_macro = mocha_false;
-	mocha_context_add_function(context, "=", &equal_type);
-
-
-	static mocha_type quote_type;
-	quote_type.invoke = quote_func;
-	quote_type.eval_all_arguments = mocha_false;
-	quote_type.is_macro = mocha_false;
-	mocha_context_add_function(context, "quote", &quote_type);
-
-	static mocha_type unquote_type;
-	unquote_type.invoke = unquote_func;
-	unquote_type.eval_all_arguments = mocha_false;
-	unquote_type.is_macro = mocha_false;
-	mocha_context_add_function(context, "unquote", &unquote_type);
+	MOCHA_DEF_FUNCTION(def, mocha_false);
+	MOCHA_DEF_FUNCTION(conj, mocha_true);
+	MOCHA_DEF_FUNCTION(let, mocha_false);
+	MOCHA_DEF_FUNCTION(defmacro, mocha_false);
+	MOCHA_DEF_FUNCTION(defn, mocha_false);
+	MOCHA_DEF_FUNCTION_EX(mul, "*", mocha_true);
+	MOCHA_DEF_FUNCTION_EX(add, "+", mocha_true);
+	MOCHA_DEF_FUNCTION_EX(dec, "-", mocha_true);
+	MOCHA_DEF_FUNCTION_EX(div, "/", mocha_true);
+	MOCHA_DEF_FUNCTION(fn, mocha_false);
+	MOCHA_DEF_FUNCTION(if, mocha_false);
+	MOCHA_DEF_FUNCTION(case, mocha_false);
+	MOCHA_DEF_FUNCTION_EX(equal, "=", mocha_true);
+	MOCHA_DEF_FUNCTION(quote, mocha_false);
+	MOCHA_DEF_FUNCTION(unquote, mocha_false);
 }
 
 static const mocha_object* invoke(mocha_runtime* self, mocha_context* context, const mocha_object* fn, const mocha_list* l)
