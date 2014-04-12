@@ -509,6 +509,37 @@ MOCHA_FUNCTION(not_func)
 	return inverted;
 }
 
+MOCHA_FUNCTION(count_func)
+{
+	const mocha_object* sequence = arguments->objects[0];
+	mocha_boolean is_empty = mocha_true;
+
+	int count = 0;
+	switch (sequence->type) {
+		case mocha_object_type_list:
+			count = sequence->data.list.count;
+			break;
+		case mocha_object_type_vector:
+			count = sequence->data.vector.count;
+			break;
+		case mocha_object_type_nil:
+			break;
+		case mocha_object_type_map:
+			count = sequence->data.map.count;
+			break;
+		default:
+			break;
+	}
+
+	mocha_object* empty = mocha_context_create_object(context);
+	empty->type = mocha_object_type_number;
+	empty->data.number.data.i = count;
+	empty->data.number.type = mocha_number_type_integer;
+
+	return empty;
+
+}
+
 MOCHA_FUNCTION(empty_func)
 {
 	const mocha_object* sequence = arguments->objects[0];
@@ -541,7 +572,7 @@ MOCHA_FUNCTION(empty_func)
 	name##_def.invoke = name##_func; \
 	name##_def.eval_all_arguments = eval_arguments; \
 	name##_def.is_macro = mocha_false; \
- 
+
 #define MOCHA_DEF_FUNCTION(name, eval_arguments) \
 	MOCHA_DEF_FUNCTION_HELPER(name, eval_arguments) \
 	mocha_context_add_function(context, #name, &name##_def);
@@ -566,6 +597,7 @@ static void bootstrap_context(mocha_context* context)
 	MOCHA_DEF_FUNCTION_EX(div, "/", mocha_true);
 	MOCHA_DEF_FUNCTION_EX(equal, "=", mocha_true);
 	MOCHA_DEF_FUNCTION_EX(empty, "empty?", mocha_true);
+	MOCHA_DEF_FUNCTION(count, mocha_true);
 	MOCHA_DEF_FUNCTION(fn, mocha_false);
 	MOCHA_DEF_FUNCTION(if, mocha_false);
 	MOCHA_DEF_FUNCTION(case, mocha_false);
