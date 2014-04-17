@@ -1,9 +1,9 @@
 require 'colored'
 
 test_files = FileList['./*.test']
-`clang ../lib/*.c -I ../include -o mocha ../repl/*.c`
 
-`clang ../repl/*.c ../lib/*.c -I ../include/ -o mocha`
+`rm mocha`
+`clang ../repl/*.c ../lib/*.c -I ../include/ -o mocha -g`
 
 o_files = []
 success = true

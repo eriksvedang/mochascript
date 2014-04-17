@@ -1,0 +1,30 @@
+#ifndef mocha_values_h
+#define mocha_values_h
+
+#include <mocha/string.h>
+#include <mocha/number.h>
+
+struct mocha_object;
+struct mocha_type;
+struct mocha_context;
+
+typedef struct mocha_values {
+
+} mocha_values;
+
+const struct mocha_object* mocha_values_create_boolean(mocha_values* values, mocha_boolean value);
+const struct mocha_object* mocha_values_create_internal_function(mocha_values* self, const struct mocha_type* type, const char* name);
+const struct mocha_object* mocha_values_create_function(mocha_values* self, const struct mocha_context* context, const struct mocha_object* arguments, const struct mocha_object* body);
+const struct mocha_object* mocha_values_create_symbol(mocha_values* self, const mocha_string* string);
+const struct mocha_object* mocha_values_create_map(mocha_values* self, const struct mocha_object** args, int count);
+const struct mocha_object* mocha_values_create_list(mocha_values* self, const struct mocha_object** args, int count);
+const struct mocha_object* mocha_values_create_vector(mocha_values* self, const struct mocha_object** args, int count);
+const struct mocha_object* mocha_values_create_string_from_cstr(mocha_values* self, const char* s);
+const struct mocha_object* mocha_values_create_string(mocha_values* self, const mocha_char* s, int count);
+const struct mocha_object* mocha_values_create_float(mocha_values* self, float v);
+const struct mocha_object* mocha_values_create_integer(mocha_values* self, int v);
+const struct mocha_object* mocha_values_create_number(mocha_values* self, mocha_number v);
+const struct mocha_object* mocha_values_create_nil(mocha_values* self);
+const struct mocha_object* mocha_values_create_keyword(mocha_values* self, const mocha_char* s, int count);
+
+#endif

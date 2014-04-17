@@ -6,6 +6,7 @@
 #include <mocha/context.h>
 #include <mocha/string.h>
 #include <mocha/error.h>
+#include <mocha/values.h>
 
 typedef struct mocha_parser {
 	const mocha_char* input;
@@ -13,6 +14,7 @@ typedef struct mocha_parser {
 	mocha_char input_buffer[128];
 	mocha_context context;
 	mocha_error error;
+	mocha_values values;
 } mocha_parser;
 
 void mocha_parser_init(mocha_parser* self, const mocha_char* input, size_t input_length);

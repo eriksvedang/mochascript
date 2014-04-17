@@ -9,6 +9,9 @@ mocha_boolean mocha_string_equal_str(const mocha_string* self, const char* cstr)
 	mocha_char ch;
 
 	size_t c_len = strlen(cstr);
+	if (self->count != c_len) {
+		return mocha_false;
+	}
 	for (int i=0; i<c_len; ++i) {
 		if (s[i] != p[i]) {
 			return mocha_false;

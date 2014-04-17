@@ -2,50 +2,68 @@
 #include <mocha/object.h>
 #include <mocha/log.h>
 #include <mocha/print.h>
+#include <mocha/values.h>
 
 #include <stdlib.h>
 
-mocha_object* mocha_context_create_object(mocha_context* self)
+
+void mocha_context_print_debug(const char* debug_text, const mocha_context* self)
 {
-	mocha_object* o = malloc(sizeof(mocha_object));
-	o->object_type = 0;
-
-	return o;
-}
-
-void mocha_context_add(mocha_context* self, const mocha_object* key, const mocha_object* value)
-{
-	self->objects[self->count] = key;
-	self->objects[self->count + 1] = value;
-	self->count += 2;
-}
-
-void mocha_context_add_function(mocha_context* self, const char* name, const struct mocha_type* type)
-{
-	mocha_object* value = mocha_context_create_object(self);
-	value->type = mocha_object_type_internal_function;
-	value->object_type = type;
-	value->debug_string = name;
-
-	mocha_object* key = mocha_context_create_object(self);
-	mocha_char buf[80];
-	size_t len = strlen(name);
-	for (size_t i=0; i<len; ++i) {
-		buf[i] = name[i];
+	MOCHA_LOG("debug: '%s'", debug_text);
+	MOCHA_LOG("context count:%lu", self->count);
+	for (size_t i=0; i<self->count; i += 2) {
+		const mocha_object* key = self->objects[i];
+		const mocha_object* value = self->objects[i+1];
+		MOCHA_LOG("Context:");
+		mocha_print_object_debug(key);
+		MOCHA_OUTPUT(" : ");
+		mocha_print_object_debug(value);
+		MOCHA_LOG("");
 	}
-	buf[len] = 0;
+}
 
-	mocha_string* key_string = malloc(sizeof(mocha_string));
-	mocha_string_init(key_string, buf, len);
-	key->data.symbol.string = key_string;
-	key->type = mocha_object_type_symbol;
-	mocha_context_add(self, key, value);
+const mocha_context* mocha_context_add(const mocha_context* self, const mocha_object* key, const mocha_object* value)
+{
+	if (!key) {
+		MOCHA_LOG("ADD: key is null");
+		return 0;
+	}
+	if (!value) {
+		MOCHA_LOG("ADD: value is null");
+		return 0;
+	}
+	mocha_context* context = malloc(sizeof(mocha_context));
+	mocha_context_init(context, self);
+
+	context->objects[context->count] = key;
+	context->objects[context->count + 1] = value;
+	context->count += 2;
+
+	return context;
+}
+
+const mocha_context* mocha_context_add_function(const mocha_context* self, mocha_values* values, const char* name, const struct mocha_type* type)
+{
+	mocha_string string;
+	mocha_string_init_from_c(&string, name);
+	const mocha_object* key = mocha_values_create_symbol(values, &string);
+	const mocha_object* value = mocha_values_create_internal_function(values, type, name);
+	return mocha_context_add(self, key, value);
 }
 
 const mocha_object* mocha_context_lookup(const mocha_context* self, const mocha_object* o)
 {
+	if (!o) {
+		MOCHA_LOG("Can not lookup with null key!");
+		return 0;
+	}
 	for (size_t i=0; i<self->count; i+=2) {
 		const mocha_object* key = self->objects[i];
+		if (!key) {
+			MOCHA_LOG("key is null!");
+			mocha_print_object_debug(o);
+			return 0;
+		}
 		if (key->type == mocha_object_type_symbol && o->type == mocha_object_type_symbol) {
 			if (mocha_string_equal(o->data.symbol.string, key->data.symbol.string)) {
 				return self->objects[i+1];
