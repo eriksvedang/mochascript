@@ -68,6 +68,10 @@ const mocha_object* mocha_context_lookup(const mocha_context* self, const mocha_
 			if (mocha_string_equal(o->data.symbol.string, key->data.symbol.string)) {
 				return self->objects[i+1];
 			}
+		} else if (key->type == mocha_object_type_keyword && o->type == mocha_object_type_keyword) {
+			if (mocha_string_equal(o->data.keyword.string, key->data.keyword.string)) {
+				return self->objects[i+1];
+			}
 		}
 	}
 

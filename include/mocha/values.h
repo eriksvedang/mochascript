@@ -3,15 +3,16 @@
 
 #include <mocha/string.h>
 #include <mocha/number.h>
+#include <mocha/type.h>
 
 struct mocha_object;
-struct mocha_type;
 struct mocha_context;
 
 typedef struct mocha_values {
-
+	mocha_type keyword_def;
 } mocha_values;
 
+void mocha_values_init(mocha_values* self);
 const struct mocha_object* mocha_values_create_boolean(mocha_values* values, mocha_boolean value);
 const struct mocha_object* mocha_values_create_internal_function(mocha_values* self, const struct mocha_type* type, const char* name);
 const struct mocha_object* mocha_values_create_function(mocha_values* self, const struct mocha_context* context, const struct mocha_object* arguments, const struct mocha_object* body);

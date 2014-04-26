@@ -239,6 +239,7 @@ static const mocha_object* parse_keyword(mocha_parser* self, mocha_error* error)
 	}
 
 	const mocha_object* o = mocha_values_create_keyword(&self->values, char_buffer, length);
+	self->context = mocha_context_add(self->context, o, o);
 	return o;
 }
 
@@ -267,6 +268,7 @@ static const mocha_object* parse_object(mocha_parser* self, mocha_error* error)
 	mocha_char first_char = skip_space(self);
 	switch (first_char) {
 		case 0:
+			MOCHA_LOG("END!");
 			o = 0;
 			break;
 		case ':':
@@ -295,6 +297,7 @@ static const mocha_object* parse_object(mocha_parser* self, mocha_error* error)
 				unread_char(self, first_char);
 				o = parse_symbol(self, error);
 			} else {
+				MOCHA_LOG("'%d'", first_char);
 				MOCHA_ERR(mocha_error_code_unexpected_character);
 			}
 	}
@@ -302,15 +305,16 @@ static const mocha_object* parse_object(mocha_parser* self, mocha_error* error)
 	return o;
 }
 
-void mocha_parser_init(mocha_parser* self, const mocha_char* input, size_t input_length)
+void mocha_parser_init(mocha_parser* self, const mocha_context* context, const mocha_char* input, size_t input_length)
 {
-	for (size_t i=0; i<input_length; ++i) {
-		self->input_buffer[i] = input[i];
-	}
+	self->input_buffer = malloc(sizeof(mocha_char) * input_length + 1);
+	memcpy(self->input_buffer, input, sizeof(mocha_char) * input_length);
 	self->input_buffer[input_length] = 0;
 
 	self->input = self->input_buffer;
 	self->input_end = self->input + input_length;
+	mocha_values_init(&self->values);
+	self->context = context;
 }
 
 const mocha_object* mocha_parser_parse(mocha_parser* self, mocha_error* error)

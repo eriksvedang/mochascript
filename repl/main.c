@@ -21,8 +21,8 @@ int read_line(mocha_char* s, int max_length)
 	int input_length = 0;
 	while (input_length < max_length) {
 		int c_char = fgetc(stdin);
-		if (c_char == 0) {
-			return -1;
+		if (c_char == EOF) {
+			return EOF;
 		}
 		s[input_length] = c_char;
 		++input_length;
@@ -37,6 +37,8 @@ int read_line(mocha_char* s, int max_length)
 static const mocha_object* parse_and_print(mocha_runtime* runtime, mocha_parser* parser, mocha_boolean print_only_last, mocha_error* error)
 {
 	const mocha_object* o = mocha_parser_parse(parser, error);
+	runtime->context = parser->context;
+
 	if (o && o->type == mocha_object_type_list) {
 		const mocha_list* list = &o->data.list;
 		for (int i = 0; i < list->count; ++i) {
@@ -62,11 +64,12 @@ static void repl(mocha_runtime* runtime, mocha_parser* parser, mocha_error* erro
 	while (1) {
 		MOCHA_OUTPUT("repl=> ");
 		int input_length = read_line(input, max_length);
-		if (input_length == -1) {
+		if (input_length == EOF) {
+			MOCHA_LOG("EOF");
 			break;
 		}
 
-		mocha_parser_init(parser, input, input_length);
+		mocha_parser_init(parser, runtime->context, input, input_length);
 
 		const mocha_object* o;
 		o = parse_and_print(runtime, parser, mocha_false, error);
@@ -91,7 +94,8 @@ static const mocha_object* eval_file(mocha_runtime* runtime, mocha_parser* parse
 	for (int i=0; i<character_count; ++i) {
 		temp_input[i] = temp_buffer[i];
 	}
-	mocha_parser_init(parser, temp_input, character_count);
+	temp_input[character_count] = 0;
+	mocha_parser_init(parser, runtime->context, temp_input, character_count);
 	const mocha_object* o = parse_and_print(runtime, parser, mocha_true, error);
 	MOCHA_LOG("");
 	free(temp_input);

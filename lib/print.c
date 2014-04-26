@@ -107,7 +107,8 @@ void print_object_debug(string_stream* f, const mocha_object* o)
 			string_stream_output(f, buf);
 			break;
 		default:
-			string_stream_output(f, "UNKNOWN");
+			snprintf(buf, 256, "TYPE '%d'", o->type);
+			string_stream_output(f, buf);
 			break;
 	}
 }

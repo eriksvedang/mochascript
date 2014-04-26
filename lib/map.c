@@ -17,3 +17,13 @@ void mocha_map_init(mocha_map* self, const mocha_object* args[], int count)
 	self->count = count;
 	memcpy(self->objects, args, octet_count);
 }
+
+const struct mocha_object* mocha_map_lookup(const mocha_map* self, const struct mocha_object* key)
+{
+	for (int i=0; i<self->count; i += 2) {
+		if (mocha_object_equal(self->objects[i], key)) {
+			return self->objects[i + 1];
+		}
+	}
+	return 0;
+}

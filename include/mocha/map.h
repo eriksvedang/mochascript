@@ -11,5 +11,6 @@ typedef struct mocha_map {
 } mocha_map;
 
 void mocha_map_init(mocha_map* self, const struct mocha_object* args[], int count);
+const struct mocha_object* mocha_map_lookup(const mocha_map* self, const struct mocha_object* key);
 
 #endif

@@ -1,6 +1,9 @@
 #include <mocha/values.h>
 #include <mocha/object.h>
 #include <mocha/type.h>
+#include <mocha/log.h>
+#include <mocha/runtime.h>
+#include <mocha/print.h>
 
 #include <stdlib.h>
 
@@ -127,11 +130,34 @@ const struct mocha_object* mocha_values_create_number(mocha_values* self, mocha_
 	return value;
 }
 
+
+MOCHA_FUNCTION(keyword_func)
+{
+	const mocha_object* argument = arguments->objects[1];
+	if (argument->type == mocha_object_type_map) {
+		const mocha_object* value = mocha_map_lookup(&argument->data.map, arguments->objects[0]);
+		if (value) {
+			return value;
+		}
+	}
+
+	return mocha_values_create_nil(runtime->values);
+}
+
+void mocha_values_init(mocha_values* self)
+{
+	self->keyword_def.invoke = keyword_func;
+	self->keyword_def.eval_all_arguments = mocha_true;
+	self->keyword_def.is_macro = mocha_false;
+
+}
+
 const struct mocha_object* mocha_values_create_keyword(mocha_values* self, const mocha_char* s, int count)
 {
 	mocha_object* value = mocha_values_create_object(self, mocha_object_type_keyword);
 	mocha_string* string = malloc(sizeof(mocha_string));
 	mocha_string_init(string, s, count);
 	mocha_keyword_init(&value->data.keyword, string);
+	value->object_type = &self->keyword_def;
 	return value;
 }
