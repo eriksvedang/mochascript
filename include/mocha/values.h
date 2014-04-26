@@ -10,6 +10,7 @@ struct mocha_context;
 
 typedef struct mocha_values {
 	mocha_type keyword_def;
+	mocha_type map_def;
 } mocha_values;
 
 void mocha_values_init(mocha_values* self);

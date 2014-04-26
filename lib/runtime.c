@@ -575,7 +575,7 @@ MOCHA_FUNCTION(nil_func)
 	name##_def.invoke = name##_func; \
 	name##_def.eval_all_arguments = eval_arguments; \
 	name##_def.is_macro = mocha_false; \
- 
+
 #define MOCHA_DEF_FUNCTION(name, eval_arguments) \
 	MOCHA_DEF_FUNCTION_HELPER(name, eval_arguments) \
 	context = mocha_context_add_function(context, values, #name, &name##_def);
@@ -693,7 +693,7 @@ const struct mocha_object* mocha_runtime_eval(mocha_runtime* self, const struct 
 		if (l->count == 0) {
 			return o;
 		}
-		const struct mocha_object* fn = mocha_context_lookup(self->context, l->objects[0]);
+		const struct mocha_object* fn = mocha_runtime_eval(self, l->objects[0], error);
 		if (!fn) {
 			MOCHA_LOG("Couldn't find lookup:");
 			mocha_print_object_debug(l->objects[0]);

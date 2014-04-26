@@ -239,7 +239,7 @@ static const mocha_object* parse_keyword(mocha_parser* self, mocha_error* error)
 	}
 
 	const mocha_object* o = mocha_values_create_keyword(&self->values, char_buffer, length);
-	self->context = mocha_context_add(self->context, o, o);
+	// self->context = mocha_context_add(self->context, o, o);
 	return o;
 }
 

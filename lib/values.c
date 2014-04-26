@@ -46,6 +46,7 @@ const mocha_object* mocha_values_create_map(mocha_values* self, const mocha_obje
 {
 	mocha_object* value = mocha_values_create_object(self, mocha_object_type_map);
 	mocha_map_init(&value->data.map, args, count);
+	value->object_type = &self->map_def;
 
 	return value;
 }
@@ -144,12 +145,29 @@ MOCHA_FUNCTION(keyword_func)
 	return mocha_values_create_nil(runtime->values);
 }
 
+MOCHA_FUNCTION(map_func)
+{
+	const mocha_object* argument = arguments->objects[1];
+	const mocha_object* map_self = arguments->objects[0];
+	if (argument->type == mocha_object_type_keyword) {
+		const mocha_object* value = mocha_map_lookup(&map_self->data.map, argument);
+		if (value) {
+			return value;
+		}
+	}
+
+	return mocha_values_create_nil(runtime->values);
+}
+
 void mocha_values_init(mocha_values* self)
 {
 	self->keyword_def.invoke = keyword_func;
 	self->keyword_def.eval_all_arguments = mocha_true;
 	self->keyword_def.is_macro = mocha_false;
 
+	self->map_def.invoke = map_func;
+	self->map_def.eval_all_arguments = mocha_true;
+	self->map_def.is_macro = mocha_false;
 }
 
 const struct mocha_object* mocha_values_create_keyword(mocha_values* self, const mocha_char* s, int count)
