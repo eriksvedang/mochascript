@@ -19,7 +19,17 @@ mocha_boolean mocha_object_equal(const mocha_object* a, const mocha_object* b)
 			return (a->data.b == b->data.b);
 		case mocha_object_type_symbol:
 			return mocha_false;
-		default:
+		case mocha_object_type_map:
+			return mocha_map_equal(&a->data.map, &b->data.map);
+		case mocha_object_type_vector:
+			return mocha_vector_equal(&a->data.vector, &b->data.vector);
+		case mocha_object_type_list:
+			return mocha_list_equal(&a->data.list, &b->data.list);
+		case mocha_object_type_nil:
+			return mocha_true;
+		case mocha_object_type_function:
+			return mocha_false;
+		case mocha_object_type_internal_function:
 			return mocha_false;
 	}
 }

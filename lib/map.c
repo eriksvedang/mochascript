@@ -27,3 +27,24 @@ const struct mocha_object* mocha_map_lookup(const mocha_map* self, const struct 
 	}
 	return 0;
 }
+
+mocha_boolean mocha_map_equal(const mocha_map* self, const mocha_map* other)
+{
+	if (self->count != other->count) {
+		return mocha_false;
+	}
+
+	for (size_t i=0; i<other->count; i += 2) {
+		const mocha_object* key = self->objects[i];
+		const mocha_object* other_value = mocha_map_lookup(other, key);
+		if (!other_value) {
+			return mocha_false;
+		}
+		const mocha_object* value = self->objects[i + 1];
+		if (!mocha_object_equal(value, other_value)) {
+			return mocha_false;
+		}
+	}
+
+	return mocha_true;
+}

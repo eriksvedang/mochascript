@@ -9,3 +9,18 @@ void mocha_vector_init(mocha_vector* self, const struct mocha_object* args[], in
 	self->count = count;
 	memcpy(self->objects, args, octet_count);
 }
+
+mocha_boolean mocha_vector_equal(const mocha_vector* self, const mocha_vector* other)
+{
+	if (self->count != other->count) {
+		return mocha_false;
+	}
+
+	for (size_t i=0; i<self->count; ++i) {
+		if (!mocha_object_equal(self->objects[i], other->objects[i])) {
+			return mocha_false;
+		}
+	}
+
+	return mocha_true;
+}
