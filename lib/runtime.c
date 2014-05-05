@@ -7,6 +7,63 @@
 #include <mocha/values.h>
 #include <stdlib.h>
 
+MOCHA_FUNCTION(map_fn)
+{
+	const mocha_object* f = arguments->objects[1];
+	const mocha_object* sequence = arguments->objects[2];
+	const mocha_object* result = 0;
+
+	switch (sequence->type) {
+		case mocha_object_type_list:
+			result = 0;
+			break;
+		case mocha_object_type_vector:
+			break;
+		case mocha_object_type_nil:
+			result = 0;
+			break;
+		case mocha_object_type_map:
+			break;
+		default:
+			break;
+	}
+
+	return result;
+}
+
+
+MOCHA_FUNCTION(vec_func)
+{
+	const mocha_object* sequence = arguments->objects[1];
+	const mocha_object* result = 0;
+
+	const mocha_object* r;
+	switch (sequence->type) {
+		case mocha_object_type_vector:
+			r = sequence;
+			break;
+		case mocha_object_type_list:
+			r = mocha_values_create_vector(runtime->values, sequence->data.list.objects, sequence->data.list.count);
+			break;
+		case mocha_object_type_map: {
+			const mocha_map* map = &sequence->data.map;
+			const mocha_object* objects[64];
+			for (int i=0; i<map->count; i+= 2) {
+				objects[i/2] = mocha_values_create_vector(runtime->values, &map->objects[i], 2);
+			}
+			r = mocha_values_create_vector(runtime->values, objects, map->count/2);
+		}
+		break;
+		case mocha_object_type_nil:
+			r = mocha_values_create_vector(runtime->values, 0, 0);
+			break;
+		default:
+			r = 0;
+	}
+
+	return r;
+}
+
 
 static const mocha_object* fn(mocha_runtime* self, const mocha_context* context, const mocha_object* arguments, const mocha_object* body)
 {
@@ -575,7 +632,7 @@ MOCHA_FUNCTION(nil_func)
 	name##_def.invoke = name##_func; \
 	name##_def.eval_all_arguments = eval_arguments; \
 	name##_def.is_macro = mocha_false; \
-
+ 
 #define MOCHA_DEF_FUNCTION(name, eval_arguments) \
 	MOCHA_DEF_FUNCTION_HELPER(name, eval_arguments) \
 	context = mocha_context_add_function(context, values, #name, &name##_def);
@@ -610,6 +667,7 @@ static void bootstrap_context(mocha_runtime* self, mocha_values* values)
 	MOCHA_DEF_FUNCTION(quote, mocha_false);
 	MOCHA_DEF_FUNCTION(unquote, mocha_false);
 	MOCHA_DEF_FUNCTION(not, mocha_true);
+	MOCHA_DEF_FUNCTION(vec, mocha_true);
 	mocha_runtime_push_context(self, context);
 }
 
