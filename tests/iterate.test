@@ -1,8 +1,0 @@
-(defn my-iterate [n x]
-   (if (<= n 0)
-       []
-       (cons x (my-iterate (dec n))))
-
-(my-iterate 4 "a")
----
-("a" "a" "a" "a")
