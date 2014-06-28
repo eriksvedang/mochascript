@@ -101,7 +101,7 @@ const struct mocha_object* mocha_values_create_string(mocha_values* self, const 
 	return value;
 }
 
-const mocha_object* mocha_values_create_function(mocha_values* self, const struct mocha_context* context, const mocha_object* arguments, const mocha_object* body)
+const mocha_object* mocha_values_create_function(mocha_values* self, const struct mocha_context* context, const mocha_object* name, const mocha_object* arguments, const mocha_object* body)
 {
 	static mocha_type fn_type;
 	fn_type.eval_all_arguments = mocha_true;
@@ -110,9 +110,10 @@ const mocha_object* mocha_values_create_function(mocha_values* self, const struc
 	mocha_object* r = mocha_values_create_object(self, mocha_object_type_function);
 	r->object_type = &fn_type;
 	r->data.function.arguments = arguments;
-	r->data.function.context = context;
 	r->data.function.code = body;
-
+	const mocha_context* context_with_own_name = mocha_context_add(context, name, r);
+	//mocha_context_print_debug("function context", context_with_own_name);
+	r->data.function.context = context_with_own_name;
 	return r;
 }
 

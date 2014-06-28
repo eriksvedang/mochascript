@@ -36,6 +36,21 @@ mocha_boolean mocha_string_equal(const mocha_string* a, const mocha_string* b)
 	return mocha_true;
 }
 
+mocha_boolean mocha_string_less(const mocha_string* a, const mocha_string* b)
+{
+	if (a->count > b->count) {
+		return mocha_false;
+	}
+
+	for (size_t i=0; i<a->count; ++i) {
+		if (a->string[i] > b->string[i]) {
+			return mocha_false;
+		}
+	}
+
+	return mocha_true;
+}
+
 const char* mocha_string_to_c(const mocha_string* s)
 {
 	static char temp[512];

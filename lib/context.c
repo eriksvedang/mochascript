@@ -38,7 +38,6 @@ const mocha_context* mocha_context_add(const mocha_context* self, const mocha_ob
 	context->objects[context->count] = key;
 	context->objects[context->count + 1] = value;
 	context->count += 2;
-
 	return context;
 }
 

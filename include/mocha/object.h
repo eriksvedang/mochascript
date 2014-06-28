@@ -46,6 +46,7 @@ typedef struct mocha_object {
 
 mocha_boolean mocha_object_boolean(const mocha_object* a);
 mocha_boolean mocha_object_equal(const mocha_object* a, const mocha_object* b);
+mocha_boolean mocha_object_less(const mocha_object* a, const mocha_object* b);
 mocha_boolean mocha_object_truthy(const mocha_object* a);
 
 #endif

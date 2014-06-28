@@ -14,7 +14,7 @@ static mocha_boolean is_space(mocha_char ch)
 
 static mocha_boolean is_alpha(mocha_char ch)
 {
-	return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (mocha_strchr("_!#$*+-=./?", ch) != 0);
+	return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (mocha_strchr("_!#$*+-><=./?", ch) != 0);
 }
 
 static mocha_boolean is_numerical(mocha_char ch)
@@ -297,7 +297,7 @@ static const mocha_object* parse_object(mocha_parser* self, mocha_error* error)
 				unread_char(self, first_char);
 				o = parse_symbol(self, error);
 			} else {
-				MOCHA_LOG("'%d'", first_char);
+				MOCHA_LOG("'%d' %c", first_char, first_char);
 				MOCHA_ERR(mocha_error_code_unexpected_character);
 			}
 	}
