@@ -2,8 +2,14 @@ require 'colored'
 
 test_files = FileList['./*.test']
 
-`rm mocha`
-`clang ../repl/*.c ../lib/*.c -I ../include/ -o mocha -g`
+is_windows = (ENV['OS'] == 'Windows_NT')
+if is_windows
+	`del mocha.exe`
+	`gcc -std=c99 ../repl/*.c ../lib/*.c -I ../include/ -o mocha -g`
+else
+	`rm mocha`
+	`clang ../repl/*.c ../lib/*.c -I ../include/ -o mocha -g`
+end
 
 o_files = []
 success = true
@@ -39,7 +45,11 @@ test_files.each do |source_file|
 		o.close
 
 		arguments = "#{mocha_file} > #{output_file} 2> #{error_file}"
-		command = "./mocha #{arguments}"
+		mocha_executable = "./mocha"
+		if is_windows
+			mocha_executable = "mocha"
+		end
+		command = "#{mocha_executable} #{arguments}"
 		`#{command}`
 
 		output_file = File.new output_file

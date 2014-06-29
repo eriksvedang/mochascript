@@ -155,7 +155,7 @@ static int parse_word(mocha_parser* self, mocha_char* char_buffer, int max_symbo
 static const mocha_object* parse_number(mocha_parser* self, mocha_error* error)
 {
 	const int max_symbol_length = 64;
-	static mocha_char char_buffer[max_symbol_length];
+	mocha_char char_buffer[max_symbol_length];
 	int length = parse_word(self, char_buffer, max_symbol_length, error);
 	if (error->code != mocha_error_code_ok) {
 		MOCHA_LOG("couldn't parse word");
@@ -208,7 +208,7 @@ static const mocha_object* parse_symbol(mocha_parser* self, mocha_error* error)
 	const mocha_object* o;
 
 	const int max_symbol_length = 64;
-	static mocha_char char_buffer[max_symbol_length];
+	mocha_char char_buffer[max_symbol_length];
 	int length = parse_word(self, char_buffer, max_symbol_length, error);
 	if (error->code != mocha_error_code_ok) {
 		return 0;
@@ -232,7 +232,7 @@ static const mocha_object* parse_symbol(mocha_parser* self, mocha_error* error)
 static const mocha_object* parse_keyword(mocha_parser* self, mocha_error* error)
 {
 	const int max_symbol_length = 64;
-	static mocha_char char_buffer[max_symbol_length];
+	mocha_char char_buffer[max_symbol_length];
 	int length = parse_word(self, char_buffer, max_symbol_length, error);
 	if (error->code != mocha_error_code_ok) {
 		return 0;
