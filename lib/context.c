@@ -6,7 +6,6 @@
 
 #include <stdlib.h>
 
-
 void mocha_context_print_debug(const char* debug_text, const mocha_context* self)
 {
 	MOCHA_LOG("debug: '%s'", debug_text);
@@ -22,32 +21,36 @@ void mocha_context_print_debug(const char* debug_text, const mocha_context* self
 	}
 }
 
-const mocha_context* mocha_context_add(const mocha_context* self, const mocha_object* key, const mocha_object* value)
-{
-	if (!key) {
-		MOCHA_LOG("ADD: key is null");
-		return 0;
-	}
-	if (!value) {
-		MOCHA_LOG("ADD: value is null");
-		return 0;
-	}
+mocha_context* mocha_context_create(const mocha_context* self) {
 	mocha_context* context = malloc(sizeof(mocha_context));
 	mocha_context_init(context, self);
 
-	context->objects[context->count] = key;
-	context->objects[context->count + 1] = value;
-	context->count += 2;
 	return context;
 }
 
-const mocha_context* mocha_context_add_function(const mocha_context* self, mocha_values* values, const char* name, const struct mocha_type* type)
+void mocha_context_add(mocha_context* self, const mocha_object* key, const mocha_object* value)
+{
+	if (!key) {
+		MOCHA_LOG("ADD: key is null");
+		return;
+	}
+	if (!value) {
+		MOCHA_LOG("ADD: value is null");
+		return;
+	}
+
+	self->objects[self->count] = key;
+	self->objects[self->count + 1] = value;
+	self->count += 2;
+}
+
+void mocha_context_add_function(mocha_context* self, mocha_values* values, const char* name, const struct mocha_type* type)
 {
 	mocha_string string;
 	mocha_string_init_from_c(&string, name);
 	const mocha_object* key = mocha_values_create_symbol(values, &string);
 	const mocha_object* value = mocha_values_create_internal_function(values, type, name);
-	return mocha_context_add(self, key, value);
+	mocha_context_add(self, key, value);
 }
 
 const mocha_object* mocha_context_lookup(const mocha_context* self, const mocha_object* o)

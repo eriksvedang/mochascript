@@ -305,7 +305,7 @@ static const mocha_object* parse_object(mocha_parser* self, mocha_error* error)
 	return o;
 }
 
-void mocha_parser_init(mocha_parser* self, const mocha_context* context, const mocha_char* input, size_t input_length)
+void mocha_parser_init(mocha_parser* self, mocha_context* context, const mocha_char* input, size_t input_length)
 {
 	self->input_buffer = malloc(sizeof(mocha_char) * input_length + 1);
 	memcpy(self->input_buffer, input, sizeof(mocha_char) * input_length);

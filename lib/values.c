@@ -111,7 +111,8 @@ const mocha_object* mocha_values_create_function(mocha_values* self, const struc
 	r->object_type = &fn_type;
 	r->data.function.arguments = arguments;
 	r->data.function.code = body;
-	const mocha_context* context_with_own_name = mocha_context_add(context, name, r);
+	mocha_context* context_with_own_name = mocha_context_create(context);
+	 mocha_context_add(context_with_own_name, name, r);
 	//mocha_context_print_debug("function context", context_with_own_name);
 	r->data.function.context = context_with_own_name;
 	return r;

@@ -81,12 +81,11 @@ MOCHA_FUNCTION(fn_func)
 	return r;
 }
 
-static const mocha_object* def(mocha_runtime* runtime, const mocha_context* context, const mocha_object* name, const mocha_object* body)
+static const mocha_object* def(mocha_runtime* runtime, mocha_context* context, const mocha_object* name, const mocha_object* body)
 {
 	mocha_error error;
 	const mocha_object* eval = mocha_runtime_eval(runtime, body, &error);
-	const mocha_context* new_context = mocha_context_add(context, name, eval);
-	runtime->context = new_context;
+	mocha_context_add(context, name, eval);
 	return eval;
 }
 
@@ -140,7 +139,7 @@ MOCHA_FUNCTION(let_func)
 		return 0;
 	}
 
-	const mocha_context* new_context = context;
+	mocha_context* new_context = mocha_context_create(context);
 	for (size_t i=0; i<assignment_vector->count; i+=2) {
 		const mocha_object* symbol = assignment_vector->objects[i];
 		if (symbol->type != mocha_object_type_symbol) {
@@ -149,7 +148,7 @@ MOCHA_FUNCTION(let_func)
 		const mocha_object* value = assignment_vector->objects[i+1];
 		const mocha_object* evaluated_value = mocha_runtime_eval(runtime, value, &error);
 
-		new_context = mocha_context_add(new_context, symbol, evaluated_value);
+		mocha_context_add(new_context, symbol, evaluated_value);
 	}
 
 	// mocha_context_print_debug("let context", new_context);
@@ -686,6 +685,7 @@ MOCHA_FUNCTION(empty_func)
 
 	switch (sequence->type) {
 		case mocha_object_type_list:
+			is_empty = sequence->data.list.count == 0;
 			break;
 		case mocha_object_type_vector:
 			is_empty = sequence->data.vector.count == 0;
@@ -718,18 +718,18 @@ MOCHA_FUNCTION(nil_func)
 	name##_def.invoke = name##_func; \
 	name##_def.eval_all_arguments = eval_arguments; \
 	name##_def.is_macro = mocha_false; \
- 
+
 #define MOCHA_DEF_FUNCTION(name, eval_arguments) \
 	MOCHA_DEF_FUNCTION_HELPER(name, eval_arguments) \
-	context = mocha_context_add_function(context, values, #name, &name##_def);
+	mocha_context_add_function(context, values, #name, &name##_def);
 
 #define MOCHA_DEF_FUNCTION_EX(name, exported_name, eval_arguments) \
 	MOCHA_DEF_FUNCTION_HELPER(name, eval_arguments) \
-	context = mocha_context_add_function(context, values, exported_name, &name##_def);
+	mocha_context_add_function(context, values, exported_name, &name##_def);
 
 static void bootstrap_context(mocha_runtime* self, mocha_values* values)
 {
-	const mocha_context* context = self->context;
+	mocha_context* context = self->context;
 	MOCHA_DEF_FUNCTION(def, mocha_false);
 	MOCHA_DEF_FUNCTION(assoc, mocha_true);
 	MOCHA_DEF_FUNCTION(conj, mocha_true);
@@ -760,7 +760,7 @@ static void bootstrap_context(mocha_runtime* self, mocha_values* values)
 	mocha_runtime_push_context(self, context);
 }
 
-static const mocha_object* invoke(mocha_runtime* self, const mocha_context* context, const mocha_object* fn, const mocha_list* arguments_list)
+static const mocha_object* invoke(mocha_runtime* self, mocha_context* context, const mocha_object* fn, const mocha_list* arguments_list)
 {
 	const mocha_object* o = 0;
 	if (fn->object_type->invoke != 0) {
@@ -775,7 +775,7 @@ static const mocha_object* invoke(mocha_runtime* self, const mocha_context* cont
 			MOCHA_LOG("Illegal number of arguments: %d", (int)arguments_list->count - 1);
 			return fn;
 		}
-		const mocha_context* new_context = fn->data.function.context;
+		mocha_context* new_context = mocha_context_create(fn->data.function.context);
 		// mocha_context_print_debug("function context:", new_context);
 		for (size_t arg_count = 0; arg_count < args->count; ++arg_count) {
 			const mocha_object* arg = args->objects[arg_count];
@@ -783,7 +783,7 @@ static const mocha_object* invoke(mocha_runtime* self, const mocha_context* cont
 				MOCHA_LOG("Must use symbols!");
 				return 0;
 			}
-			new_context = mocha_context_add(new_context, arg, arguments_list->objects[1 + arg_count]);
+			mocha_context_add(new_context, arg, arguments_list->objects[1 + arg_count]);
 		}
 		mocha_runtime_push_context(self, new_context);
 		mocha_error error;
@@ -810,7 +810,7 @@ void mocha_runtime_init(mocha_runtime* self)
 	bootstrap_context(self, self->values);
 }
 
-void mocha_runtime_push_context(mocha_runtime* self, const mocha_context* context)
+void mocha_runtime_push_context(mocha_runtime* self, mocha_context* context)
 {
 	// mocha_context_print_debug("pushing context", context);
 	for (size_t i=0; i<context->count; ++i) {
@@ -870,7 +870,6 @@ const struct mocha_object* mocha_runtime_eval(mocha_runtime* self, const struct 
 		}
 		o = invoke(self, self->context, fn, l);
 		if (!o) {
-			MOCHA_LOG("Invoke returned 0:");
 			mocha_print_object_debug(fn);
 		}
 	} else {
