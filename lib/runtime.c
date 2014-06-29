@@ -425,7 +425,7 @@ MOCHA_FUNCTION(dissoc_func)
 			break;
 		}
 	}
-	
+
 	memcpy(result, map->objects, sizeof(mocha_object*) * overwrite_index);
 	memcpy(&result[overwrite_index], &map->objects[overwrite_index + 2], sizeof(mocha_object*) * ((map->count - 1) * 2 - overwrite_index));
 
@@ -747,7 +747,7 @@ MOCHA_FUNCTION(nil_func)
 	name##_def.invoke = name##_func; \
 	name##_def.eval_all_arguments = eval_arguments; \
 	name##_def.is_macro = mocha_false; \
-
+ 
 #define MOCHA_DEF_FUNCTION(name, eval_arguments) \
 	MOCHA_DEF_FUNCTION_HELPER(name, eval_arguments) \
 	mocha_context_add_function(context, values, #name, &name##_def);
@@ -797,7 +797,6 @@ static const mocha_object* invoke(mocha_runtime* self, mocha_context* context, c
 		if (fn->type == mocha_object_type_function) {
 			MOCHA_LOG("STRANGE INVOK!");
 		}
-		// mocha_print_object_debug(fn);
 		o = fn->object_type->invoke(self, context, arguments_list);
 	} else if (fn->type == mocha_object_type_function) {
 		const mocha_list* args = &fn->data.function.arguments->data.list;
@@ -885,7 +884,7 @@ const struct mocha_object* mocha_runtime_eval(mocha_runtime* self, const struct 
 		mocha_list new_args;
 		if (should_evaluate_arguments) {
 			const mocha_object* converted_args[32];
-			converted_args[0] = l->objects[0];
+			converted_args[0] = fn;
 			for (size_t i = 1; i < l->count; ++i) {
 				const struct mocha_object* arg = mocha_runtime_eval(self, l->objects[i], error);
 				if (!arg) {

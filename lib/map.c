@@ -1,7 +1,7 @@
 #include <mocha/map.h>
 #include <mocha/object.h>
 #include <mocha/log.h>
-
+#include <mocha/print.h>
 #include <stdlib.h>
 
 void mocha_map_init(mocha_map* self, const mocha_object* args[], int count)

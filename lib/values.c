@@ -112,7 +112,7 @@ const mocha_object* mocha_values_create_function(mocha_values* self, const struc
 	r->data.function.arguments = arguments;
 	r->data.function.code = body;
 	mocha_context* context_with_own_name = mocha_context_create(context);
-	 mocha_context_add(context_with_own_name, name, r);
+	mocha_context_add(context_with_own_name, name, r);
 	//mocha_context_print_debug("function context", context_with_own_name);
 	r->data.function.context = context_with_own_name;
 	return r;
@@ -141,6 +141,13 @@ MOCHA_FUNCTION(keyword_func)
 		const mocha_object* value = mocha_map_lookup(&argument->data.map, arguments->objects[0]);
 		if (value) {
 			return value;
+		} else {
+			if (arguments->count == 3) {
+				return arguments->objects[2];
+			} else {
+				MOCHA_LOG("ERROR");
+				return 0;
+			}
 		}
 	}
 
@@ -151,6 +158,7 @@ MOCHA_FUNCTION(map_func)
 {
 	const mocha_object* argument = arguments->objects[1];
 	const mocha_object* map_self = arguments->objects[0];
+
 	if (argument->type == mocha_object_type_keyword) {
 		const mocha_object* value = mocha_map_lookup(&map_self->data.map, argument);
 		if (value) {

@@ -21,7 +21,8 @@ void mocha_context_print_debug(const char* debug_text, const mocha_context* self
 	}
 }
 
-mocha_context* mocha_context_create(const mocha_context* self) {
+mocha_context* mocha_context_create(const mocha_context* self)
+{
 	mocha_context* context = malloc(sizeof(mocha_context));
 	mocha_context_init(context, self);
 
