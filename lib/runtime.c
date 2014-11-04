@@ -165,12 +165,16 @@ static void number_mul(mocha_number* r, const mocha_number* a, const mocha_numbe
 		r->type = mocha_number_type_integer;
 		r->data.i = a->data.i * b->data.i;
 	} else {
-		r->type = mocha_number_type_float;
 		if (a->type == mocha_number_type_integer) {
 			r->data.f = (float) a->data.i * b->data.f;
+		} else if (b->type == mocha_number_type_integer) {
+			r->data.f = a->data.f * (float) b->data.i;
+		} else if (a->type == mocha_number_type_float && b->type == mocha_number_type_float) {
+			r->data.f = a->data.f * b->data.f;
 		} else {
-			r->data.f =  a->data.f * (float) b->data.i;
+			r->data.f = -1.0;
 		}
+		r->type = mocha_number_type_float;
 	}
 }
 
@@ -239,6 +243,20 @@ MOCHA_FUNCTION(add_func)
 
 	const mocha_object* r = mocha_values_create_number(runtime->values, v);
 	return r;
+}
+
+MOCHA_FUNCTION(int_func)
+{
+	const mocha_object* argument = arguments->objects[1];
+	if (argument->type == mocha_object_type_number && argument->data.number.type == mocha_number_type_float) {
+			mocha_number v;
+			v.type = mocha_number_type_integer;
+			v.data.i = (int) argument->data.number.data.f;
+			const mocha_object* r = mocha_values_create_number(runtime->values, v);
+			return r;
+	}
+
+	return 0;
 }
 
 MOCHA_FUNCTION(dec_func)
@@ -747,7 +765,7 @@ MOCHA_FUNCTION(nil_func)
 	name##_def.invoke = name##_func; \
 	name##_def.eval_all_arguments = eval_arguments; \
 	name##_def.is_macro = mocha_false; \
- 
+
 #define MOCHA_DEF_FUNCTION(name, eval_arguments) \
 	MOCHA_DEF_FUNCTION_HELPER(name, eval_arguments) \
 	mocha_context_add_function(context, values, #name, &name##_def);
@@ -768,6 +786,7 @@ static void bootstrap_context(mocha_runtime* self, mocha_values* values)
 	MOCHA_DEF_FUNCTION(rest, mocha_true);
 	MOCHA_DEF_FUNCTION(let, mocha_false);
 	MOCHA_DEF_FUNCTION(defn, mocha_false);
+	MOCHA_DEF_FUNCTION(int, mocha_true);
 	MOCHA_DEF_FUNCTION_EX(mul, "*", mocha_true);
 	MOCHA_DEF_FUNCTION_EX(add, "+", mocha_true);
 	MOCHA_DEF_FUNCTION_EX(sub, "-", mocha_true);
