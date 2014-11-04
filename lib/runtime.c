@@ -124,6 +124,17 @@ MOCHA_FUNCTION(if_func)
 	return result;
 }
 
+MOCHA_FUNCTION(get_func)
+{
+	const mocha_object* object = arguments->objects[1];
+	const mocha_object* lookup = arguments->objects[2];
+	if (object->type == mocha_object_type_map) {
+		const struct mocha_object* result = mocha_map_lookup(&object->data.map, lookup);
+		return result;
+	}
+	return 0;
+}
+
 MOCHA_FUNCTION(let_func)
 {
 	mocha_error error;
@@ -784,6 +795,7 @@ static void bootstrap_context(mocha_runtime* self, mocha_values* values)
 	MOCHA_DEF_FUNCTION(cons, mocha_true);
 	MOCHA_DEF_FUNCTION(first, mocha_true);
 	MOCHA_DEF_FUNCTION(rest, mocha_true);
+	MOCHA_DEF_FUNCTION(get, mocha_true);
 	MOCHA_DEF_FUNCTION(let, mocha_false);
 	MOCHA_DEF_FUNCTION(defn, mocha_false);
 	MOCHA_DEF_FUNCTION(int, mocha_true);
@@ -896,8 +908,7 @@ const struct mocha_object* mocha_runtime_eval(mocha_runtime* self, const struct 
 			return 0;
 		}
 		mocha_boolean should_evaluate_arguments = mocha_true;
-		if (!fn->object_type) {
-		} else {
+		if (fn->object_type) {
 			should_evaluate_arguments = fn->object_type->eval_all_arguments;
 		}
 		mocha_list new_args;
