@@ -1,0 +1,4 @@
+(when nil "should only return nil)
+---
+nil
+
