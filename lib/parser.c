@@ -243,6 +243,24 @@ static const mocha_object* parse_keyword(mocha_parser* self, mocha_error* error)
 	return o;
 }
 
+static const mocha_object* parse_unquote(mocha_parser* self, mocha_error* error)
+{
+	const mocha_object* do_not_eval = parse_object(self, error);
+
+	mocha_string temp_string;
+	mocha_string_init_from_c(&temp_string, "unquote");
+	const mocha_object* quote_symbol = create_symbol(&self->values, &temp_string);
+
+	const mocha_object* args[2];
+
+	args[0] = quote_symbol;
+	args[1] = do_not_eval;
+
+	const mocha_object* l = mocha_values_create_list(&self->values, args, 2);
+
+	return l;
+}
+
 static const mocha_object* parse_tick(mocha_parser* self, mocha_error* error)
 {
 	const mocha_object* do_not_eval = parse_object(self, error);
@@ -284,7 +302,11 @@ static const mocha_object* parse_object(mocha_parser* self, mocha_error* error)
 			o = parse_list(self, error);
 			break;
 		case '\'':
+		case '`':
 			o = parse_tick(self, error);
+			break;
+		case '~':
+			o = parse_unquote(self, error);
 			break;
 		case '\"':
 			o = parse_string(self, error);
