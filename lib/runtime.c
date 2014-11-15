@@ -96,6 +96,19 @@ MOCHA_FUNCTION(def_func)
 	return eval;
 }
 
+MOCHA_FUNCTION(defmacro_func)
+{
+	const mocha_object* name = arguments->objects[1];
+	const mocha_object* macro_arguments = arguments->objects[2];
+	const mocha_object* body = arguments->objects[3];
+	const mocha_object* macro = mocha_values_create_macro(runtime->values, runtime->context, name, macro_arguments, body);
+
+	def(runtime, context, name, macro);
+
+	return macro;
+}
+
+
 MOCHA_FUNCTION(defn_func)
 {
 	const mocha_object* name = arguments->objects[1];
@@ -789,6 +802,7 @@ static void bootstrap_context(mocha_runtime* self, mocha_values* values)
 {
 	mocha_context* context = self->context;
 	MOCHA_DEF_FUNCTION(def, mocha_false);
+	MOCHA_DEF_FUNCTION(defmacro, mocha_false);
 	MOCHA_DEF_FUNCTION(assoc, mocha_true);
 	MOCHA_DEF_FUNCTION(dissoc, mocha_true);
 	MOCHA_DEF_FUNCTION(conj, mocha_true);
@@ -849,7 +863,6 @@ static const mocha_object* invoke(mocha_runtime* self, mocha_context* context, c
 		mocha_error error;
 		o = mocha_runtime_eval(self, fn->data.function.code, &error);
 		if (fn->object_type->is_macro) {
-			MOCHA_LOG("MACRO!");
 			o = mocha_runtime_eval(self, o, &error);
 		}
 		mocha_runtime_pop_context(self);
